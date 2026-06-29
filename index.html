@@ -301,6 +301,13 @@
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Email Peserta</p>
                                         <strong id="res-phone" class="text-slate-700">Memuat...</strong>
                                     </div>
+                                    
+                                    <!-- WADAH KATEGORI YANG DIKEMBALIKAN -->
+                                    <div class="col-span-2">
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Kategori Lomba</p>
+                                        <strong id="res-kategori" class="text-slate-800">Memuat...</strong>
+                                    </div>
+
                                     <div class="col-span-2 border-t border-slate-200 pt-3">
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Waktu Check-In Scan</p>
                                         <strong id="res-waktu" class="text-slate-600"><i class="fa-regular fa-clock mr-1"></i> -</strong>
@@ -829,7 +836,13 @@
                 document.getElementById('res-nama').innerText = result.data.nama;
                 document.getElementById('res-unit').innerText = "Unit " + result.data.unit;
                 document.getElementById('res-phone').innerText = result.data.phone;
-                document.getElementById('res-kategori').innerText = result.data.kategori || "-";
+                
+                // Pengaman ekstra untuk mencegah crash (Null Check)
+                const resKategori = document.getElementById('res-kategori');
+                if (resKategori) {
+                    resKategori.innerText = result.data.kategori || "-";
+                }
+                
                 document.getElementById('res-waktu').innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ${result.data.waktuScan}`;
                 
                 successCard.classList.remove('hidden');
