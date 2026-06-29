@@ -454,7 +454,7 @@
         // ====================================================================
         // 🔴 KONFIGURASI API VERCEL (MENGGUNAKAN API GOOGLE APPS SCRIPT ANDA) 🔴
         // ====================================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGkwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
         
         let isGAS = API_URL !== "" && API_URL.startsWith("http");
 
@@ -509,6 +509,7 @@
         }
 
         // FUNGSI PENGHUBUNG (FETCH API) KE GOOGLE APPS SCRIPT
+        // DIOPTIMALKAN UNTUK MENGHINDARI CORS PREFLIGHT (Failed to Fetch)
         async function fetchAPI(action, payload = null) {
             if (!isGAS) return null;
             
@@ -517,17 +518,23 @@
             
             if (payload) {
                 options.method = 'POST';
-                // Gunakan text/plain untuk melewati CORS Preflight (OPTIONS) dari browser
+                // Menggunakan text/plain agar browser menganggap ini sebagai "Simple Request"
+                // Hal ini sangat ampuh mencegah kegagalan CORS Preflight OPTIONS di server Google Apps Script
                 options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
                 options.body = JSON.stringify({ action: action, ...payload });
             } else {
                 options.method = 'GET';
-                url += "?action=" + action;
+                url += (url.includes('?') ? '&' : '?') + "action=" + action;
             }
             
-            const response = await fetch(url, options);
-            if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
-            return await response.json();
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
+                return await response.json();
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                throw new Error("Gagal terhubung ke API Google Script. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+            }
         }
 
         function toggleSidebar() {
@@ -595,9 +602,11 @@
                     if (!isBackground) showOverlay(false);
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
                 } catch (error) {
-                    if (!isBackground) showToast("Koneksi API gagal: " + error.message, "error");
+                    if (!isBackground) {
+                        showToast("Koneksi API gagal: " + error.message, "error");
+                        showOverlay(false);
+                    }
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
-                    if (!isBackground) showOverlay(false);
                 }
             } else {
                 setTimeout(() => {
@@ -726,9 +735,7 @@
             renderPesertaTable(filtered);
         }
 
-        // ====================================================================
-        // SISTEM DETEKSI KAMERA (Vercel Mode)
-        // ====================================================================
+        // ================= JAVASCRIPT SCANNER LOGIC =================
         function loadCameraDevices() {
             const select = document.getElementById('camera-select');
             if (!select) return;
@@ -844,7 +851,6 @@
 
         // Core Verifikasi Check-In VIA REST API POST
         async function processRegistrationCode(idCode) {
-            // Ubah teks overlay agar terasa lebih instan
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
             
@@ -861,7 +867,7 @@
                     }
                 } catch(err) {
                     showOverlay(false);
-                    showToast("Koneksi API POST gagal: " + err.message, "error");
+                    showToast("Koneksi API gagal: " + err.message, "error");
                 }
             } else {
                 showOverlay(false);
@@ -991,9 +997,7 @@
             }
         }
 
-        // ====================================================================
-        // MULTI-PLATFORM AUDIO BEP SYNTHESIZER
-        // ====================================================================
+        // Sound Feedback Controller (Fallback to Web Audio API Synthesizer)
         function playSuccessSound() {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
