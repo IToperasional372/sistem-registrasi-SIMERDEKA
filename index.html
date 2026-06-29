@@ -213,35 +213,30 @@
                             <i class="fa-solid fa-qrcode text-blue-600"></i> Alat Pemindai & Input
                         </h3>
 
-                        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex flex-col gap-3">
-                            <label class="text-xs font-bold text-indigo-800 uppercase tracking-wider"><i class="fa-solid fa-image mr-1"></i> Scan dari File / Foto QR</label>
-                            <input type="file" id="qr-input-file" accept="image/*" class="hidden" onchange="scanImage(event)">
-                            <button onclick="document.getElementById('qr-input-file').click()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm shadow-sm">
-                                <i class="fa-solid fa-upload"></i> Upload Foto QR Code
-                            </button>
-                        </div>
-                        
                         <div class="flex flex-col gap-1.5 mt-2">
-                            <label for="camera-select" class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-video mr-1"></i> Mode Kamera Live (Opsional):</label>
+                            <label for="camera-select" class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-video mr-1"></i> Pilih Perangkat Kamera PC:</label>
                             <div class="flex gap-2">
                                 <select id="camera-select" class="flex-grow border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
-                                    <option value="">Akses Dibatasi Browser Iframe</option>
+                                    <option value="">-- Menunggu Akses Kamera... --</option>
                                 </select>
+                                <button onclick="requestCameraPermission()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow" title="Paksa Minta Izin Kamera">
+                                    <i class="fa-solid fa-key"></i> Izin
+                                </button>
                             </div>
                         </div>
 
                         <div class="bg-slate-900 rounded-xl aspect-square relative flex items-center justify-center overflow-hidden border-4 border-slate-800">
                             <div id="reader" class="w-full h-full"></div>
                             <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity">
-                                <i class="fa-solid fa-camera-retro text-4xl text-blue-400"></i>
-                                <span class="text-sm font-semibold">Live Kamera Dimatikan. <br><br>Gunakan fitur <strong class="text-yellow-400">Upload Foto QR</strong> atau <strong class="text-yellow-400">Scanner USB</strong> di bawah untuk PC.</span>
+                                <i class="fa-solid fa-camera-retro text-4xl text-blue-400 animate-bounce"></i>
+                                <span class="text-sm font-semibold">Silakan klik tombol <strong class="text-yellow-400">"Aktifkan Kamera"</strong> untuk memulai pemindaian.</span>
                             </div>
                             <div id="scanner-laser-line" class="scanner-lasers hidden"></div>
                         </div>
                         
-                        <div class="hidden gap-2">
+                        <div class="flex gap-2">
                             <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm shadow">
-                                <i class="fa-solid fa-play"></i> Paksa Nyalakan Kamera
+                                <i class="fa-solid fa-play"></i> Aktifkan Kamera
                             </button>
                             <button id="btn-stop-camera" onclick="stopScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300 hidden">
                                 <i class="fa-solid fa-stop"></i> Matikan Kamera
@@ -265,7 +260,7 @@
                         <div id="result-standby" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-10 text-center flex flex-col items-center justify-center h-full min-h-[350px] gap-3 text-slate-400">
                             <i class="fa-solid fa-qrcode text-7xl text-slate-300 animate-pulse"></i>
                             <h4 class="font-poppins font-bold text-lg text-slate-600">Standby Memindai</h4>
-                            <p class="text-sm max-w-sm">Tembakkan Scanner USB ke kotak input, atau upload gambar QR Code pendaftaran.</p>
+                            <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
                         <!-- Success Result Card -->
@@ -692,32 +687,98 @@
         }
 
         // ====================================================================
-        // FITUR SCAN GAMBAR FILE / FOTO QR CODE (Aman dari Vercel/CORS)
+        // SISTEM DETEKSI KAMERA (Vercel Mode)
         // ====================================================================
-        function scanImage(event) {
-            if (event.target.files.length == 0) {
-                return;
-            }
-            const imageFile = event.target.files[0];
-            showOverlay(true);
+        function loadCameraDevices() {
+            const select = document.getElementById('camera-select');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Mendeteksi Kamera Perangkat... --</option>';
             
+            Html5Qrcode.getCameras().then(devices => {
+                select.innerHTML = "";
+                if (devices && devices.length > 0) {
+                    devices.forEach((device, index) => {
+                        const opt = document.createElement('option');
+                        opt.value = device.id;
+                        opt.text = device.label || `Kamera USB ${index + 1}`;
+                        if (device.label && (device.label.toLowerCase().includes('logitech') || device.label.toLowerCase().includes('usb') || device.label.toLowerCase().includes('webcam') || device.label.toLowerCase().includes('logi'))) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">Kamera tidak terdeteksi. Gunakan input manual.</option>';
+                }
+            }).catch(err => {
+                console.warn("Gagal mendapatkan daftar kamera:", err);
+                select.innerHTML = '<option value="">Akses Kamera Dibatasi Browser</option>';
+            });
+        }
+
+        async function requestCameraPermission() {
+            showToast("Meminta izin akses kamera...", "warning");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                showToast("Akses kamera berhasil diizinkan!", "success");
+                loadCameraDevices();
+            } catch (err) {
+                console.error("Gagal mendapatkan izin kamera:", err);
+                showToast("Akses kamera ditolak. Silakan periksa izin browser.", "error");
+            }
+        }
+
+        function startScanner() {
+            const select = document.getElementById('camera-select');
+            const selectedCameraId = select ? select.value : null;
+
+            document.getElementById('camera-loading').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('camera-loading').classList.add('hidden');
+                document.getElementById('scanner-laser-line').classList.remove('hidden');
+            }, 300);
+
+            document.getElementById('btn-start-camera').classList.add('hidden');
+            document.getElementById('btn-stop-camera').classList.remove('hidden');
+
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
             
-            html5QrCode.scanFile(imageFile, true)
-                .then(decodedText => {
-                    showOverlay(false);
-                    processRegistrationCode(decodedText);
-                })
-                .catch(err => {
-                    showOverlay(false);
-                    showToast("Gagal! QR Code tidak terdeteksi pada gambar.", "error");
-                    console.log("Error scan gambar:", err);
-                });
-                
-            event.target.value = "";
+            const config = { fps: 15, qrbox: { width: 220, height: 220 } };
+            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "environment" };
+
+            html5QrCode.start(
+                targetCamera,
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Camera error:", err);
+                showToast("Akses kamera ditolak / tidak didukung.", "error");
+                stopScanner();
+            });
         }
+
+        function stopScanner() {
+            document.getElementById('btn-start-camera').classList.remove('hidden');
+            document.getElementById('btn-stop-camera').classList.add('hidden');
+            document.getElementById('camera-loading').classList.remove('hidden', 'opacity-0');
+            document.getElementById('scanner-laser-line').classList.add('hidden');
+
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode = null;
+                }).catch(err => console.error("Error stopping scanner:", err));
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            processRegistrationCode(decodedText);
+            stopScanner(); // Berhenti otomatis setelah scan sukses mencegah spam api
+        }
+
+        function onScanFailure() {}
 
         function manualSubmit() {
             const inputVal = document.getElementById('manual-input').value.trim();
