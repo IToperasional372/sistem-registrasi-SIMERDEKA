@@ -56,39 +56,73 @@
         }
 
         /* ====================================================================
-           OPTIMALISASI SLIDE TOOLTIP DAN TRANSISI
+           OPTIMALISASI SLIDE TOOLTIP DAN SINKRONISASI LEBAR LAYAR
            ==================================================================== */
+        #sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         /* Hover Aktif HANYA saat Sidebar diperkecil */
         .sidebar-collapsed .nav-btn:hover .menu-tooltip {
             opacity: 1;
-            transform: translate-x(0);
-            pointer-events: auto;
+            visibility: visible;
+            left: calc(100% + 12px); /* Efek slide */
         }
         
-        /* Sembunyikan teks label secara halus di desktop saat sidebar ciut */
-        @media (min-width: 768px) {
-            .sidebar-collapsed-hide {
-                transition: opacity 0.2s ease-in-out, width 0.2s ease-in-out;
-            }
-            .md\:w-20 .sidebar-logo-container {
-                width: 48px !important;
-                height: 48px !important;
-            }
-            .md:w-20 .nav-label {
-                display: none !important;
-            }
-            .md:w-20 #sidebar-title,
-            .md:w-20 #sidebar-user {
-                display: none !important;
-            }
-            .md:w-20 .sidebar-hide-card {
-                display: none !important;
-            }
-            .md:w-20 .nav-btn {
-                justify-content: center !important;
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-            }
+        /* Mencegah Tooltip terpotong oleh Scrollbar */
+        .sidebar-collapsed #sidebar-menu {
+            overflow: visible !important;
+        }
+
+        /* Gaya Tooltip Melayang */
+        .menu-tooltip {
+            position: absolute;
+            top: 50%;
+            left: 80%;
+            transform: translateY(-50%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #1f2054;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* CSS KHUSUS SAAT STATE COLLAPSED AKTIF (Mencegah Tabrakan Lebar) */
+        .sidebar-collapsed {
+            width: 5rem !important; /* Menciut paksa ke w-20 (80px) */
+        }
+        .sidebar-collapsed #sidebar-logo {
+            width: 3rem !important; /* h-12 w-12 */
+            height: 3rem !important;
+            margin-bottom: 0px !important;
+        }
+        .sidebar-collapsed #sidebar-title,
+        .sidebar-collapsed #sidebar-user,
+        .sidebar-collapsed .nav-label,
+        .sidebar-collapsed .sidebar-hide-card {
+            display: none !important;
+            opacity: 0;
+        }
+        .sidebar-collapsed .nav-btn {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            width: 100% !important;
+        }
+        
+        /* TOMBOL TOGGLE DESKTOP DIGESER KE TENGAH SAAT SIDEBAR DICIPTAKAN COLLAPSED (UPDATE) */
+        .sidebar-collapsed #sidebar-toggle-btn {
+            left: 50% !important;
+            transform: translateX(-50%) !important;
         }
     </style>
 </head>
@@ -98,23 +132,23 @@
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden md:hidden transition-opacity"></div>
 
     <!-- 1. SIDEBAR NAVIGATION -->
-    <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col transition-all duration-300 z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
+    <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
         
-        <!-- SIDEBAR HEADER -->
+        <!-- SIDEBAR HEADER (UPDATE: Tombol toggle default dipindah ke kiri atas/left-4) -->
         <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
-            <!-- Desktop Collapse Button (Perfect Symmetrical Centering) -->
-            <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-1/2 -translate-x-1/2 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
+            <!-- Desktop Collapse Button (Dipindahkan ke kiri atas sesuai permintaan - UPDATE) -->
+            <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-4 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
             
             <!-- Logo area -->
-            <div id="sidebar-logo" class="sidebar-logo-container w-20 h-20 bg-transparent rounded-full flex items-center justify-center mb-4 transition-all duration-300 overflow-hidden">
+            <div id="sidebar-logo" class="w-20 h-20 bg-transparent rounded-full flex items-center justify-center mb-4 transition-all duration-300 overflow-hidden">
                 <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
                      onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
                      alt="Logo biMBA" 
-                     class="w-full h-full object-contain rounded-full transition-transform duration-350 cursor-pointer"
+                     class="w-full h-full object-contain rounded-full transition-all duration-300 cursor-pointer"
                      style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
                      onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
                      onmouseout="this.style.transform='scale(1) rotate(0deg)'">
@@ -131,7 +165,7 @@
         </div>
 
         <!-- MENU SIDEBAR -->
-        <div id="sidebar-menu" class="flex flex-col flex-grow p-4 gap-6 overflow-y-auto">
+        <div id="sidebar-menu" class="flex flex-col flex-grow p-4 gap-6 overflow-y-auto transition-all duration-300">
             <div>
                 <span class="text-gray-400 text-xs font-bold px-3 uppercase tracking-wider block mb-2 nav-label">Menu Utama</span>
                 <nav class="flex flex-col gap-1">
@@ -139,23 +173,26 @@
                         <i class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Dashboard</span>
                         <!-- Slide Tooltip Melayang -->
-                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Dashboard</span>
+                        <span class="menu-tooltip">Dashboard</span>
                     </button>
                     <button onclick="switchView('scan')" id="btn-scan" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-qrcode w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Scan Registrasi</span>
-                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Scan Registrasi</span>
+                        <!-- Slide Tooltip Melayang -->
+                        <span class="menu-tooltip">Scan Registrasi</span>
                     </button>
                     <button onclick="switchView('peserta')" id="btn-peserta" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Data Kehadiran & Lomba</span>
-                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Data Kehadiran & Lomba</span>
+                        <!-- Slide Tooltip Melayang -->
+                        <span class="menu-tooltip">Data Kehadiran & Lomba</span>
                     </button>
                     <button onclick="switchView('walogs')" id="btn-walogs" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-paper-plane w-5 text-center text-lg flex-shrink-0 text-blue-400"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Antrean Log Email</span>
                         <span id="wa-badge-count" class="absolute right-4 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full nav-label">0</span>
-                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Antrean Log Email</span>
+                        <!-- Slide Tooltip Melayang -->
+                        <span class="menu-tooltip">Antrean Log Email</span>
                     </button>
                 </nav>
             </div>
@@ -646,7 +683,7 @@
         }
 
         // FUNGSI PENGHUBUNG (FETCH API) KE GOOGLE APPS SCRIPT
-        // DIOPTIMALKAN UNTUK MENGHINDARI CORS PREFLIGHT (Failed to Fetch)
+        // UPDATE: Penyelamat Jaringan Terintegrasi Mandiri (CORS Bypass & Proxy Fallback untuk Lingkungan Sandbox)
         async function fetchAPI(action, payload = null) {
             if (!isGAS) return null;
             
@@ -665,58 +702,87 @@
             }
             
             try {
+                // 1. Coba koneksi langsung (Sangat cepat & optimal di Vercel asli)
                 const response = await fetch(url, options);
                 if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
-                return await response.json();
+                const text = await response.text();
+                
+                // Cek jika yang dikembalikan adalah halaman login HTML milik Google
+                if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                    throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+                }
+                return JSON.parse(text);
             } catch (err) {
-                console.error("Fetch Error:", err);
-                throw new Error("Gagal terhubung ke API Google Script. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+                console.warn("Koneksi langsung gagal atau mengembalikan format tidak valid, mencoba jalur proxy cadangan...", err);
+                
+                if (err.message && err.message.includes("Anyone")) {
+                    throw err; // Jangan gunakan proxy jika masalahnya adalah konfigurasi deployment Google
+                }
+                
+                // 2. Jalur Alternatif Mandiri: CORSProxy.io (Mengembalikan JSON murni langsung!)
+                if (!payload) {
+                    try {
+                        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                        const proxyResponse = await fetch(proxyUrl);
+                        if (!proxyResponse.ok) throw new Error("Koneksi Proxy gagal");
+                        const text = await proxyResponse.text();
+                        
+                        if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                            throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+                        }
+                        return JSON.parse(text);
+                    } catch (proxyErr) {
+                        console.error("Proxy 1 (Corsproxy.io) gagal:", proxyErr);
+                        
+                        if (proxyErr.message && proxyErr.message.includes("Anyone")) {
+                            throw proxyErr;
+                        }
+                        
+                        // 3. Jalur Alternatif Kedua: AllOrigins Proxy
+                        try {
+                            const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                            const aoResponse = await fetch(allOriginsUrl);
+                            if (!aoResponse.ok) throw new Error("AllOrigins failed");
+                            const aoJson = await aoResponse.json();
+                            const content = aoJson.contents;
+                            
+                            if (content.trim().startsWith("<!DOCTYPE") || content.trim().startsWith("<html")) {
+                                throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+                            }
+                            return JSON.parse(content);
+                        } catch (aoErr) {
+                            console.error("Proxy 2 (AllOrigins) gagal:", aoErr);
+                            throw new Error(aoErr.message && aoErr.message.includes("Anyone") ? aoErr.message : "Gagal menarik data dari Google Sheets. Periksa koneksi internet Anda atau pastikan Web App Apps Script di-deploy dengan akses 'Anyone'!");
+                        }
+                    }
+                } else {
+                    throw err;
+                }
             }
         }
 
-        // TOGGLE SIDEBAR DESKTOP & MOBILE (UPDATE: Mendukung collapse lebar & sembunyikan teks)
+        // TOGGLE SIDEBAR DESKTOP & MOBILE (UPDATE: Memperbaiki sinkronisasi layout grid layar kanan)
         function toggleSidebar() {
-            const sidebar = document.querySelector('aside');
-            const menu = document.getElementById('sidebar-menu');
-            const logoTextDiv = sidebar.querySelector('.logo-text');
-            const logo = document.getElementById('sidebar-logo');
-            const title = document.getElementById('sidebar-title');
-            const user = document.getElementById('sidebar-user');
-            
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
             if (window.innerWidth < 768) {
                 // Mobile Slide Drawer Toggle
                 toggleMobileSidebar();
             } else {
-                if (sidebar) {
-                    sidebar.classList.toggle('md:w-72');
-                    sidebar.classList.toggle('md:w-20');
-                    sidebar.classList.toggle('sidebar-collapsed'); // NEW CLASS FOR HOVER TOOLTIP EFFECT
-                    
-                    if (logo) {
-                        logo.classList.toggle('w-20');
-                        logo.classList.toggle('h-20');
-                        logo.classList.toggle('mb-4');
-                        logo.classList.toggle('md:w-12');
-                        logo.classList.toggle('md:h-12');
-                    }
-                    if (title) title.classList.toggle('md:hidden');
-                    if (user) user.classList.toggle('md:hidden');
-                    
-                    const textLabels = sidebar.querySelectorAll('.nav-label, .uppercase, label span');
-                    textLabels.forEach(label => label.classList.toggle('md:hidden'));
-                    
-                    const configCard = sidebar.querySelector('.bg-navy-item\\/60');
-                    if (configCard) configCard.classList.toggle('md:hidden');
-                    
-                    const badgeCard = sidebar.querySelector('.bg-navy-item\\/50');
-                    if (badgeCard) badgeCard.classList.toggle('md:hidden');
-                    
-                    const navBtns = sidebar.querySelectorAll('.nav-btn');
-                    navBtns.forEach(btn => {
-                        btn.classList.toggle('justify-center');
-                        btn.classList.toggle('px-4');
-                    });
+                sidebar.classList.toggle('sidebar-collapsed');
+                
+                // Ganti kelas lebar Tailwind secara eksplisit
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    sidebar.style.width = '80px';
+                } else {
+                    sidebar.style.width = '288px';
                 }
+                
+                // Memicu event resize window agar Chart.js menggambar ulang Donut Chart secara presisi
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 300);
             }
         }
 
@@ -1055,7 +1121,7 @@
             });
         }
 
-        // UPDATE: Hentikan pemindaian kamera secara aman
+        // Hentikan pemindaian kamera secara aman
         function stopScanner() {
             const btnStart = document.getElementById('btn-start-camera');
             const btnStop = document.getElementById('btn-stop-camera');
