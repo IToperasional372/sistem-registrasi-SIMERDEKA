@@ -4,17 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Registrasi SI-MERDEKA</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- HTML5 QR Code Library (CDN) -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Chart.js CDN (Untuk Donut Chart Interaktif) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -128,43 +123,35 @@
 </head>
 <body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- Mobile Sidebar Backdrop Overlay -->
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden md:hidden transition-opacity"></div>
 
-    <!-- 1. SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
         
-        <!-- SIDEBAR HEADER -->
         <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
-            <!-- Desktop Collapse Button -->
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-4 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
             
-            <!-- Logo area -->
             <div id="sidebar-logo" class="w-20 h-20 bg-transparent rounded-full flex items-center justify-center mb-4 transition-all duration-300 overflow-hidden">
                 <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
                      onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
                      alt="Logo biMBA" 
-                     class="w-full h-full object-contain rounded-full transition-all duration-300 cursor-pointer"
+                     class="w-full h-full object-contain rounded-full transition-transform duration-300 cursor-pointer"
                      style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
                      onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
                      onmouseout="this.style.transform='scale(1) rotate(0deg)'">
             </div>
             
-            <!-- Judul Utama biMBA AIUEO -->
             <h1 id="sidebar-title" class="text-white text-lg font-bold text-center leading-tight tracking-wide font-poppins transition-all duration-300">SI-MERDEKA <br> biMBA AIUEO</h1>
             
-            <!-- Detail Lencana Bawah -->
             <div id="sidebar-user" class="mt-4 flex items-center gap-2 bg-[#1f2054] border border-[#3b3c8f] rounded-full px-4 py-1.5 shadow-inner text-center transition-all duration-300">
                 <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0"></div>
                 <span class="text-[10px] text-gray-200 font-medium whitespace-nowrap">Berbuat Baik dengan Bijaksana</span>
             </div>
         </div>
 
-        <!-- MENU SIDEBAR -->
         <div id="sidebar-menu" class="flex flex-col flex-grow p-4 gap-6 overflow-y-auto transition-all duration-300">
             <div>
                 <span class="text-gray-400 text-xs font-bold px-3 uppercase tracking-wider block mb-2 nav-label">Menu Utama</span>
@@ -172,32 +159,27 @@
                     <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Dashboard</span>
-                        <!-- Slide Tooltip Melayang -->
                         <span class="menu-tooltip">Dashboard</span>
                     </button>
                     <button onclick="switchView('scan')" id="btn-scan" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-qrcode w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Scan Registrasi</span>
-                        <!-- Slide Tooltip Melayang -->
                         <span class="menu-tooltip">Scan Registrasi</span>
                     </button>
                     <button onclick="switchView('peserta')" id="btn-peserta" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Data Kehadiran & Lomba</span>
-                        <!-- Slide Tooltip Melayang -->
                         <span class="menu-tooltip">Data Kehadiran & Lomba</span>
                     </button>
                     <button onclick="switchView('walogs')" id="btn-walogs" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-paper-plane w-5 text-center text-lg flex-shrink-0 text-blue-400"></i>
                         <span class="font-semibold nav-label whitespace-nowrap">Antrean Log Email</span>
                         <span id="wa-badge-count" class="absolute right-4 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full nav-label">0</span>
-                        <!-- Slide Tooltip Melayang -->
                         <span class="menu-tooltip">Antrean Log Email</span>
                     </button>
                 </nav>
             </div>
 
-            <!-- Settings & Environment Status -->
             <div class="mt-auto border-t border-[#3b3c8f]/30 pt-4 flex flex-col gap-3 sidebar-hide-card">
                 <div class="bg-[#1f2054] p-3 rounded-xl border border-white/5 flex flex-col gap-2 nav-label">
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pengaturan Notifikasi</span>
@@ -221,13 +203,10 @@
         </div>
     </aside>
 
-    <!-- 2. MAIN WORKSPACE -->
     <main class="flex-grow flex flex-col min-w-0 bg-[#f8fafc]">
         
-        <!-- TOP NAVBAR -->
         <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-3">
-                <!-- Mobile Sidebar Burger Menu Trigger -->
                 <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl text-slate-700 hover:text-slate-900 transition-colors">
                     <i class="fa-solid fa-bars"></i>
                 </button>
@@ -247,14 +226,10 @@
             </div>
         </header>
 
-        <!-- VIEW AREA -->
         <section id="content-container" class="flex-grow p-6 md:p-8 overflow-y-auto">
 
-            <!-- ================= VIEW 1: DASHBOARD ================= -->
             <div id="view-dashboard" class="view-pane flex flex-col gap-6">
-                <!-- Stat Cards (UPDATE: Layout disesuaikan menjadi 5 kolom untuk menampung Tim Merah & Putih) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <!-- KARTU BIRU PREMIUM GRADIENT -->
                     <div class="bg-gradient-to-br from-blue-600 via-indigo-700 to-indigo-950 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-blue-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-clipboard-list absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-file-signature text-yellow-300"></i></div>
@@ -264,17 +239,15 @@
                         </div>
                     </div>
                     
-                    <!-- KARTU SISA KUPON MERDEKA GRADIENT -->
                     <div class="bg-gradient-to-br from-red-600 via-rose-700 to-rose-950 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-red-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
                         <div>
-                            <p class="text-[10px] font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Snack</p>
+                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Snack</p>
                             <h3 id="stat-kupon" class="font-poppins font-bold text-3xl leading-none">0</h3>
                         </div>
                     </div>
 
-                    <!-- KARTU HIJAU PREMIUM GRADIENT -->
                     <div class="bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-800 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-emerald-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-people-group absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-qrcode text-emerald-200"></i></div>
@@ -284,7 +257,6 @@
                         </div>
                     </div>
 
-                    <!-- KARTU TIM MERAH PREMIUM GRADIENT (NEW Card 4) -->
                     <div class="bg-gradient-to-br from-red-500 via-red-600 to-red-800 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-red-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-flag absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-circle text-red-100"></i></div>
@@ -294,7 +266,6 @@
                         </div>
                     </div>
 
-                    <!-- KARTU TIM PUTIH PREMIUM GRADIENT (NEW Card 5) -->
                     <div class="bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 rounded-2xl p-5 text-slate-800 relative overflow-hidden shadow-lg border border-slate-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-flag absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10 text-slate-500"></i>
                         <div class="bg-slate-800/10 p-3 rounded-xl text-2xl text-slate-600"><i class="fa-regular fa-circle"></i></div>
@@ -305,27 +276,22 @@
                     </div>
                 </div>
 
-                <!-- DIAGRAM LINGKARAN & LOMBA STATS SEJAJAR DENGAN AKSEN BLUE BORDER -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     
-                    <!-- Donut Chart Card -->
                     <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-chart-pie text-blue-600"></i> Diagram Kehadiran & Status Check-In
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-grow">
-                            <!-- Chart Canvas Column -->
                             <div class="md:col-span-5 flex justify-center relative">
                                 <div class="w-48 h-48 relative">
                                     <canvas id="attendanceChart"></canvas>
-                                    <!-- Center percentage label inside the donut -->
                                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span id="chart-center-pct" class="text-3xl font-poppins font-bold text-slate-800 leading-none">0%</span>
                                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Kehadiran</span>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Legend & Info Column -->
                             <div class="md:col-span-7 flex flex-col justify-center gap-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col">
@@ -353,13 +319,11 @@
                         </div>
                     </div>
 
-                    <!-- Kategori Lomba Stats -->
                     <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-trophy text-yellow-500"></i> Peminat Kategori Lomba
                         </h3>
                         <div id="lomba-stats-container" class="flex flex-col gap-4 py-2 flex-grow justify-center">
-                            <!-- Lomba 1 -->
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-lg"><i class="fa-solid fa-socks"></i></div>
@@ -370,7 +334,6 @@
                                 </div>
                                 <span id="stat-lomba-1" class="text-lg font-bold text-indigo-950 bg-slate-200 px-3 py-1 rounded-full">0</span>
                             </div>
-                            <!-- Lomba 2 -->
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg"><i class="fa-solid fa-circle-nodes"></i></div>
@@ -381,7 +344,6 @@
                                 </div>
                                 <span id="stat-lomba-2" class="text-lg font-bold text-indigo-950 bg-slate-200 px-3 py-1 rounded-full">0</span>
                             </div>
-                            <!-- Lomba 3 -->
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg"><i class="fa-solid fa-people-pulling"></i></div>
@@ -397,11 +359,9 @@
                 </div>
             </div>
 
-            <!-- ================= VIEW 2: SCAN BARCODE ================= -->
             <div id="view-scan" class="view-pane hidden flex flex-col gap-6">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     
-                    <!-- Scanner Panel -->
                     <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
                         <h3 class="font-poppins font-bold text-lg text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-qrcode text-blue-600"></i> Alat Pemindai & Input
@@ -448,16 +408,13 @@
                         </div>
                     </div>
 
-                    <!-- Scan Results Panel (UPDATE: Menambahkan keterangan Tim & Pesan Kupon Hadiah & Pita) -->
                     <div class="lg:col-span-7 flex flex-col">
-                        <!-- Default standby card -->
                         <div id="result-standby" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-10 text-center flex flex-col items-center justify-center h-full min-h-[350px] gap-3 text-slate-400">
                             <i class="fa-solid fa-qrcode text-7xl text-slate-300 animate-pulse"></i>
                             <h4 class="font-poppins font-bold text-lg text-slate-600">Standby Memindai</h4>
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
-                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -469,8 +426,7 @@
                                 </div>
                             </div>
                             
-                            <!-- PESAN KUPON, HADIAH, SNACK & PITA SESUAI TIM -->
-                            <div class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
+                            <div id="res-success-msg" class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
                                 "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span id="res-pita-color" class="font-bold">Merah/Putih</span> sesuai tim"
                             </div>
 
@@ -493,7 +449,6 @@
                                         <strong id="res-unit" class="text-slate-700">Memuat...</strong>
                                     </div>
                                     <div>
-                                        <!-- PENAMPIL TIM SUKSES -->
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
@@ -509,7 +464,6 @@
                             </div>
                         </div>
 
-                        <!-- Warning/Already Checked In Card -->
                         <div id="result-warning" class="hidden bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-4xl">
@@ -552,7 +506,6 @@
                 </div>
             </div>
 
-            <!-- ================= VIEW 3: DATA PESERTA ================= -->
             <div id="view-peserta" class="view-pane hidden flex flex-col h-full gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
@@ -565,7 +518,6 @@
                                 <input type="text" id="search-peserta" onkeyup="filterParticipantsTable()" placeholder="Cari nama, ID, unit..." class="pl-10 pr-4 py-1.5 w-full sm:w-56 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
                             </div>
                             
-                            <!-- FILTER TIM BARU -->
                             <select id="filter-tim" onchange="filterParticipantsTable()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-600 bg-white">
                                 <option value="Semua">Semua Tim</option>
                                 <option value="Tim Merah">Tim Merah</option>
@@ -588,16 +540,13 @@
                     </div>
 
                     <div class="overflow-x-auto flex-grow p-4">
-                        <!-- border penuh dan border warna slate pada tabel -->
                         <table class="w-full text-left border-collapse border border-slate-200">
                             <thead>
-                                <!-- Warna header tabel menggunakan biru tua premium bg-[#292a68] dengan teks putih -->
                                 <tr class="bg-[#292a68] text-white border-b border-[#3b3c8f]">
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Barcode ID</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Asal Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <!-- TABEL HEADER TIM BARU -->
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan</th>
@@ -614,7 +563,6 @@
                 </div>
             </div>
 
-            <!-- ================= VIEW 4: ANTRIAN LOG EMAIL ================= -->
             <div id="view-walogs" class="view-pane hidden flex flex-col h-full gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col h-full">
                     <div class="border-b border-slate-100 pb-4 mb-4 flex justify-between items-center">
@@ -641,7 +589,6 @@
         </section>
     </main>
 
-    <!-- Guide Modal for API Access Configuration (Panduan Interaktif Otorisasi) -->
     <div id="api-error-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-red-100">
             <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
@@ -673,13 +620,11 @@
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 z-50 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
         <i id="toast-icon" class="fa-solid fa-circle-check"></i>
         <span id="toast-message">Proses Sukses!</span>
     </div>
 
-    <!-- Sync Modal Spinner -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-4 max-w-xs text-center border border-slate-100">
             <i class="fa-solid fa-arrows-spin text-5xl text-blue-600 animate-spin"></i>
@@ -690,7 +635,6 @@
         </div>
     </div>
 
-    <!-- 3. JAVASCRIPT LOGIC -->
     <script>
         // ====================================================================
         // 🔴 KONFIGURASI API VERCEL (MENGGUNAKAN API GOOGLE APPS SCRIPT ANDA) 🔴
@@ -1031,7 +975,7 @@
             if (statHadir) statHadir.innerText = stats.totalHadir;
             if (statKupon) statKupon.innerText = stats.sisaKupon;
 
-            // Update stats tim baru secara real-time (UPDATE)
+            // Update stats tim baru secara real-time
             if (statTimMerah && stats.totalMerah !== undefined) {
                 statTimMerah.innerHTML = `${stats.totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirMerah || 0} hadir)</span>`;
             }
@@ -1091,11 +1035,14 @@
                 const textScan = p.waktuScan !== "-" ? p.waktuScan : "Belum Check-In";
                 const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
                 
-                // STYLING BADGE TIM
-                const isTimMerah = p.tim && p.tim.includes("Merah");
+                // STYLING BADGE TIM (UPDATE: Mendukung penanganan tanda "-")
+                const isTimMerah = p.tim && p.tim.toLowerCase().includes("merah");
+                const isTimPutih = p.tim && p.tim.toLowerCase().includes("putih");
                 const timBadgeClass = isTimMerah 
                     ? "bg-red-100 text-red-700 border-red-200" 
-                    : "bg-blue-100 text-blue-700 border-blue-200";
+                    : (isTimPutih 
+                        ? "bg-blue-100 text-blue-700 border-blue-200" 
+                        : "bg-slate-100 text-slate-500 border-slate-200");
 
                 const row = `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 transition-colors">
@@ -1107,9 +1054,8 @@
                                 <i class="fa-solid fa-trophy text-amber-500"></i> ${lombaLabel}
                             </span>
                         </td>
-                        <!-- KOLOM DATA TIM -->
                         <td class="p-4 text-sm font-bold border-r border-slate-200">
-                            <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "Tim Merah"}</span>
+                            <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "-"}</span>
                         </td>
                         <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
                         <td class="p-4 text-slate-500 text-xs border-r border-slate-200">${textScan}</td>
@@ -1350,6 +1296,7 @@
             }
         }
 
+        // Penanganan teks dinamis instruksi pita pada kotak modal registrasi sukses
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1368,7 +1315,6 @@
                 const rPhone = document.getElementById('res-phone');
                 const rWaktu = document.getElementById('res-waktu');
                 const rTim = document.getElementById('res-tim'); // TIM Sukses check-in
-                const rPitaColor = document.getElementById('res-pita-color'); // Penunjuk Pita Dinamis
                 
                 if (rId) rId.innerText = result.data.id;
                 if (rNama) rNama.innerText = result.data.nama;
@@ -1376,16 +1322,25 @@
                 if (rPhone) rPhone.innerText = result.data.phone;
                 
                 if (rTim) {
-                    rTim.innerText = result.data.tim;
+                    rTim.innerText = result.data.tim || "-";
                     // Styling dinamis warna tim pada sukses card
-                    const isMerah = result.data.tim && result.data.tim.includes("Merah");
-                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : "text-lg text-blue-600 font-bold";
+                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
+                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
+                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
                 }
 
-                if (rPitaColor) {
-                    const isMerah = result.data.tim && result.data.tim.includes("Merah");
-                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
-                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
+                // Integrasi Teks Sukses Dinamis dengan / tanpa pita sesuai tim
+                const resSuccessMsg = document.getElementById('res-success-msg');
+                if (resSuccessMsg) {
+                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
+                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
+                    if (isMerah || isPutih) {
+                        let warnaPita = isMerah ? "Merah" : "Putih";
+                        let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
+                    } else {
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
+                    }
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
