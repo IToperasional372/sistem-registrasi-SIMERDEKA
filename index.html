@@ -264,12 +264,13 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white rounded-2xl p-6 text-slate-800 border border-slate-200 shadow-sm flex items-center gap-5 relative overflow-hidden transition-transform hover:scale-[1.01]">
-                        <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[150px] opacity-5"></i>
-                        <div class="bg-slate-100 p-4 rounded-xl text-3xl text-slate-500"><i class="fa-solid fa-ticket text-orange-500"></i></div>
+                    <!-- KARTU SISA KUPON MERDEKA GRADIENT -->
+                    <div class="bg-gradient-to-br from-red-600 via-rose-700 to-rose-950 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-rose-950/20 border border-red-400/20 flex items-center gap-5 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[150px] opacity-10"></i>
+                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sisa Kupon & Paket Snack</p>
-                            <h3 id="stat-kupon" class="font-poppins font-bold text-5xl leading-none text-slate-800">0</h3>
+                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Paket Snack</p>
+                            <h3 id="stat-kupon" class="font-poppins font-bold text-5xl leading-none">0</h3>
                         </div>
                     </div>
 
@@ -529,7 +530,7 @@
                 </div>
             </div>
 
-            <!-- ================= VIEW 3: DATA PESERTA (UPDATE: Warna Header Biru & Kisi Border Tabel) ================= -->
+            <!-- ================= VIEW 3: DATA PESERTA (Warna Header Biru & Kisi Border Tabel) ================= -->
             <div id="view-peserta" class="view-pane hidden flex flex-col h-full gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
@@ -556,10 +557,10 @@
                     </div>
 
                     <div class="overflow-x-auto flex-grow p-4">
-                        <!-- UPDATE: Ditambahkan border penuh dan border warna slate pada tabel -->
+                        <!-- border penuh dan border warna slate pada tabel -->
                         <table class="w-full text-left border-collapse border border-slate-200">
                             <thead>
-                                <!-- UPDATE: Warna header tabel menggunakan biru tua premium bg-[#292a68] dengan teks putih -->
+                                <!-- Warna header tabel menggunakan biru tua premium bg-[#292a68] dengan teks putih -->
                                 <tr class="bg-[#292a68] text-white border-b border-[#3b3c8f]">
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Barcode ID</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
@@ -607,6 +608,38 @@
         </section>
     </main>
 
+    <!-- Guide Modal for API Access Configuration (Panduan Interaktif Otorisasi) -->
+    <div id="api-error-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-red-100">
+            <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h3 class="font-poppins font-bold text-lg text-slate-800">Akses API Google Terkunci!</h3>
+            </div>
+            <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Sistem mendeteksi kegagalan komunikasi dengan Google Sheets. Hal ini umumnya terjadi karena setelan keamanan Web App di Google Apps Script Anda masih dikunci sebagai <span class="text-red-600 font-bold">Only myself</span> (Hanya Saya).
+            </p>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 space-y-2.5 mb-6 font-medium">
+                <p class="font-bold text-slate-800 text-sm mb-1">🛠️ Cara Membuka Akses (Wajib):</p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Buka editor <strong>Google Apps Script</strong> proyek Anda.</li>
+                    <li>Klik tombol biru <strong>Deploy</strong> (Terapkan) di pojok kanan atas.</li>
+                    <li>Pilih <strong>Manage deployments</strong> (Kelola penerapan).</li>
+                    <li>Klik ikon <strong>Pensil (Edit)</strong> pada versi aktif Anda saat ini.</li>
+                    <li>Ubah setelan <strong>Who has access</strong> (Siapa yang memiliki akses) dari <span class="text-red-600 font-bold">Only myself</span> menjadi <span class="text-green-600 font-bold">Anyone</span> (Siapa saja).</li>
+                    <li>Klik tombol <strong>Deploy</strong> untuk menerapkan versi baru tersebut.</li>
+                </ol>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="window.open('https://script.google.com/', '_blank')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Apps Script
+                </button>
+                <button onclick="toggleApiErrorModal(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 z-50 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
         <i id="toast-icon" class="fa-solid fa-circle-check"></i>
@@ -637,6 +670,7 @@
         let waLogs = [];
         let html5QrCode = null;
         let attendanceChartInstance = null; // Menyimpan instansi Donut Chart
+        let isScannerActive = false; // Flag pelacak keaktifan pemindai (UPDATE)
 
         // Inisialisasi Program Utama
         window.onload = function() {
@@ -685,7 +719,7 @@
         }
 
         // FUNGSI PENGHUBUNG (FETCH API) KE GOOGLE APPS SCRIPT
-        // UPDATE: Penyelamat Jaringan Terintegrasi Mandiri (CORS Bypass & Proxy Fallback untuk Lingkungan Sandbox)
+        // Penyelamat Jaringan Terintegrasi Mandiri (CORS Bypass & Proxy Fallback untuk Lingkungan Sandbox)
         async function fetchAPI(action, payload = null) {
             if (!isGAS) return null;
             
@@ -763,7 +797,7 @@
             }
         }
 
-        // TOGGLE SIDEBAR DESKTOP & MOBILE (UPDATE: Memperbaiki sinkronisasi layout grid layar kanan)
+        // TOGGLE SIDEBAR DESKTOP & MOBILE (Memperbaiki sinkronisasi layout grid layar kanan)
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
@@ -831,7 +865,7 @@
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.innerText = titles[targetViewId] || "Registrasi";
             
-            if (targetViewId !== 'scan' && html5QrCode) {
+            if (targetViewId !== 'scan' && isScannerActive) {
                 stopScanner();
             } else if (targetViewId === 'scan') {
                 loadCameraDevices();
@@ -842,6 +876,18 @@
                 const overlay = document.getElementById('sidebar-overlay');
                 if (sidebar) sidebar.classList.add('-translate-x-full');
                 if (overlay) overlay.classList.add('hidden');
+            }
+        }
+
+        // TOGGLE MODAL PANDUAN ERROR API
+        function toggleApiErrorModal(show) {
+            const modal = document.getElementById('api-error-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
             }
         }
 
@@ -861,9 +907,15 @@
                     if (!isBackground) showOverlay(false);
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
                 } catch (error) {
+                    console.error("syncDatabase error:", error);
                     if (!isBackground) {
                         showToast("Koneksi API gagal: " + error.message, "error");
                         showOverlay(false);
+                        
+                        // Menampilkan petunjuk interaktif setup 'Anyone' secara otomatis
+                        if (error.message.includes("Anyone") || error.message.includes("Login HTML") || error.message.includes("Proxy")) {
+                            toggleApiErrorModal(true);
+                        }
                     }
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
                 }
@@ -939,7 +991,7 @@
             }
         }
 
-        // Dashboard UI Statistics & Custom Legends (UPDATE: Format ke "Relawan")
+        // Dashboard UI Statistics & Custom Legends (Format ke "Relawan")
         function updateDashboardStatsUI(stats) {
             const statPendaftar = document.getElementById('stat-pendaftar');
             const statHadir = document.getElementById('stat-hadir');
@@ -984,7 +1036,7 @@
             updateAttendanceChart(hadir, belumHadir);
         }
 
-        // UPDATE: Render tabel pendaftar dengan border sekeliling & kisi pembatas kolom
+        // Render tabel pendaftar dengan border sekeliling & kisi pembatas kolom
         function renderPesertaTable(data) {
             const tbody = document.getElementById('peserta-table-body');
             if (!tbody) return;
@@ -1049,6 +1101,7 @@
         }
 
         // ================= JAVASCRIPT SCANNER LOGIC =================
+        // UPDATE: Deteksi kamera bertahap (Permission First, Enumerate Second) agar stabil di sandboxed iframe
         function loadCameraDevices() {
             const select = document.getElementById('camera-select');
             if (!select) return;
@@ -1057,15 +1110,22 @@
             Html5Qrcode.getCameras().then(devices => {
                 select.innerHTML = "";
                 if (devices && devices.length > 0) {
-                    devices.forEach((device, index) => {
-                        const opt = document.createElement('option');
-                        opt.value = device.id;
-                        opt.text = device.label || `Kamera USB ${index + 1}`;
-                        if (device.label && (device.label.toLowerCase().includes('logitech') || device.label.toLowerCase().includes('usb') || device.label.toLowerCase().includes('webcam') || device.label.toLowerCase().includes('logi'))) {
-                            opt.selected = true;
-                        }
-                        select.appendChild(opt);
-                    });
+                    const hasLabels = devices.some(d => d.label);
+                    if (!hasLabels) {
+                        // Jika label kosong (karena kebijakan keamanan browser), minta akses sekali untuk memicu resolusi label
+                        navigator.mediaDevices.getUserMedia({ video: true })
+                            .then(stream => {
+                                stream.getTracks().forEach(track => track.stop());
+                                Html5Qrcode.getCameras().then(newDevices => {
+                                    populateCameraSelect(newDevices);
+                                });
+                            })
+                            .catch(err => {
+                                populateCameraSelect(devices); // Tampilkan tanpa label jika izin ditolak
+                            });
+                    } else {
+                        populateCameraSelect(devices);
+                    }
                 } else {
                     select.innerHTML = '<option value="">Kamera tidak terdeteksi. Gunakan input manual.</option>';
                 }
@@ -1075,16 +1135,39 @@
             });
         }
 
+        function populateCameraSelect(devices) {
+            const select = document.getElementById('camera-select');
+            if (!select) return;
+            select.innerHTML = "";
+            devices.forEach((device, index) => {
+                const opt = document.createElement('option');
+                opt.value = device.id;
+                opt.text = device.label || `Kamera ${index + 1}`;
+                if (device.label && (device.label.toLowerCase().includes('logitech') || device.label.toLowerCase().includes('usb') || device.label.toLowerCase().includes('webcam') || device.label.toLowerCase().includes('logi'))) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+        }
+
+        // UPDATE: Memperbaiki penanganan error ketika kamera fisik tidak ditemukan (Requested device not found)
         async function requestCameraPermission() {
             showToast("Meminta izin akses kamera...", "warning");
             try {
+                // Gunakan constraint minimal untuk memicu dialog izin browser
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 stream.getTracks().forEach(track => track.stop());
                 showToast("Akses kamera berhasil diizinkan!", "success");
                 loadCameraDevices();
             } catch (err) {
                 console.error("Gagal mendapatkan izin kamera:", err);
-                showToast("Akses kamera ditolak. Silakan periksa izin browser.", "error");
+                if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError" || err.message.includes("device not found")) {
+                    showToast("Webcam tidak ditemukan! Pasangkan kamera eksternal Anda.", "error");
+                } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                    showToast("Izin kamera ditolak browser. Izinkan melalui gembok URL kiri atas.", "error");
+                } else {
+                    showToast("Kamera gagal diakses: " + err.message, "error");
+                }
             }
         }
 
@@ -1111,21 +1194,39 @@
             }
             
             const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
-            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "environment" };
+            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "user" };
 
+            // Fallback otomatis ke kamera sistem jika ID spesifik tidak ditemukan/error
             html5QrCode.start(
                 targetCamera,
                 config,
                 onScanSuccess,
                 onScanFailure
-            ).catch(err => {
-                console.error("Camera error:", err);
-                showToast("Akses kamera ditolak / tidak didukung.", "error");
-                stopScanner();
+            ).then(() => {
+                isScannerActive = true;
+            }).catch(err => {
+                console.warn("Gagal memulai dengan kamera spesifik, mencoba fallback...", err);
+                if (selectedCameraId) {
+                    html5QrCode.start(
+                        { facingMode: "user" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        isScannerActive = true;
+                    }).catch(fallbackErr => {
+                        console.error("Camera fallback error:", fallbackErr);
+                        showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
+                        stopScanner();
+                    });
+                } else {
+                    showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
+                    stopScanner();
+                }
             });
         }
 
-        // Hentikan pemindaian kamera secara aman
+        // Penghentian aman berbasis flag 'isScannerActive' untuk mencegah pesan rejection "Cannot stop, scanner is not running"
         function stopScanner() {
             const btnStart = document.getElementById('btn-start-camera');
             const btnStop = document.getElementById('btn-stop-camera');
@@ -1138,9 +1239,18 @@
             if (scannerLine) scannerLine.classList.add('hidden');
 
             if (html5QrCode) {
-                html5QrCode.stop().then(() => {
+                if (isScannerActive) {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode = null;
+                        isScannerActive = false;
+                    }).catch(err => {
+                        console.error("Error stopping scanner:", err);
+                        html5QrCode = null;
+                        isScannerActive = false;
+                    });
+                } else {
                     html5QrCode = null;
-                }).catch(err => console.error("Error stopping scanner:", err));
+                }
             }
         }
 
@@ -1149,7 +1259,7 @@
             stopScanner(); // Berhenti otomatis setelah scan sukses mencegah spam api
         }
 
-        // UPDATE: Memperbaiki SyntaxError dengan menambahkan kata kunci 'function' yang hilang (CRITICAL FIX)
+        // Memperbaiki SyntaxError dengan menambahkan kata kunci 'function' yang hilang
         function onScanFailure() {}
 
         function manualSubmit() {
