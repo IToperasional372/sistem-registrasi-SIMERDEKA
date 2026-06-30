@@ -148,7 +148,7 @@
                 <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
                      onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
                      alt="Logo biMBA" 
-                     class="w-full h-full object-contain rounded-full transition-all duration-300 cursor-pointer"
+                     class="w-full h-full object-contain rounded-full transition-transform duration-300 cursor-pointer"
                      style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
                      onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
                      onmouseout="this.style.transform='scale(1) rotate(0deg)'">
@@ -579,22 +579,27 @@
                                 <option value="Tarik Tambang">Tarik Tambang</option>
                             </select>
                             
+                            <!-- UPDATE: Dropdown filter status pendaftaran kini ditambahkan opsi filter "Tidak Hadir" (NEW) -->
                             <select id="filter-status" onchange="filterParticipantsTable()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-600 bg-white">
                                 <option value="Semua">Semua Status</option>
                                 <option value="Sudah Hadir">Sudah Hadir</option>
                                 <option value="Belum Hadir">Belum Hadir</option>
+                                <option value="Tidak Hadir">Tidak Hadir</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="overflow-x-auto flex-grow p-4">
+                        <!-- border penuh dan border warna slate pada tabel -->
                         <table class="w-full text-left border-collapse border border-slate-200">
                             <thead>
+                                <!-- Warna header tabel menggunakan biru tua premium bg-[#292a68] dengan teks putih -->
                                 <tr class="bg-[#292a68] text-white border-b border-[#3b3c8f]">
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Barcode ID</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Asal Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
+                                    <!-- TABEL HEADER TIM BARU -->
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan</th>
@@ -864,7 +869,7 @@
             }
         }
 
-        // UPDATE: Otomatisasi nyalakan kamera ketika masuk tab scan
+        // Otomatisasi nyalakan kamera ketika masuk tab scan
         function switchView(targetViewId) {
             document.querySelectorAll('.view-pane').forEach(pane => pane.classList.add('hidden'));
             const targetPane = document.getElementById('view-' + targetViewId);
@@ -893,7 +898,7 @@
             if (targetViewId !== 'scan' && isScannerActive) {
                 stopScanner();
             } else if (targetViewId === 'scan') {
-                // UPDATE: Saat berpindah ke menu scan registrasi, kamera langsung dijalankan otomatis!
+                // Saat berpindah ke menu scan registrasi, kamera langsung dijalankan otomatis!
                 loadCameraDevices();
                 setTimeout(() => {
                     startScanner();
@@ -1090,8 +1095,15 @@
             }
 
             data.forEach(p => {
-                const badgeClass = p.status === "Sudah Hadir" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700";
-                const textScan = p.waktuScan !== "-" ? p.waktuScan : "Belum Check-In";
+                // UPDATE: Menambahkan warna merah transparan lembut khusus untuk status "Tidak Hadir" (NEW)
+                let badgeClass = "bg-yellow-100 text-yellow-700";
+                if (p.status === "Sudah Hadir") {
+                    badgeClass = "bg-green-100 text-green-700";
+                } else if (p.status === "Tidak Hadir") {
+                    badgeClass = "bg-red-100 text-red-600";
+                }
+                
+                const textScan = p.status === "Sudah Hadir" && p.waktuScan !== "-" ? p.waktuScan : (p.status === "Tidak Hadir" ? "Berhalangan" : "Belum Check-In");
                 const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
                 
                 // STYLING BADGE TIM (Mendukung penanganan tanda "-")
@@ -1346,11 +1358,11 @@
                         sendEmailNotificationAPI(result.data);
                     }
                     
-                    // UPDATE: SISTEM COOLDOWN & AUTO-RESTART KAMERA (5 DETIK)
+                    // SISTEM COOLDOWN & AUTO-RESTART KAMERA (5 DETIK)
                     // Kamera mati 5 detik agar panitia sempat melihat hasil scan, lalu otomatis menyala kembali
                     const activePane = document.querySelector('.view-pane:not(.hidden)');
                     if (activePane && activePane.id === 'view-scan') {
-                        showToast("Scanner dijeda 5 detik...", "warning");
+                        showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
                         setTimeout(() => {
                             const currentPane = document.querySelector('.view-pane:not(.hidden)');
                             if (currentPane && currentPane.id === 'view-scan') {
