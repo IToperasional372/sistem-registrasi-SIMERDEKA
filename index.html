@@ -136,7 +136,7 @@
         
         <!-- SIDEBAR HEADER -->
         <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
-            <!-- Desktop Collapse Button (Dipindahkan ke kiri atas sesuai permintaan) -->
+            <!-- Desktop Collapse Button -->
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-4 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -148,7 +148,7 @@
                 <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
                      onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
                      alt="Logo biMBA" 
-                     class="w-full h-full object-contain rounded-full transition-transform duration-350 cursor-pointer"
+                     class="w-full h-full object-contain rounded-full transition-all duration-300 cursor-pointer"
                      style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
                      onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
                      onmouseout="this.style.transform='scale(1) rotate(0deg)'">
@@ -252,35 +252,55 @@
 
             <!-- ================= VIEW 1: DASHBOARD ================= -->
             <div id="view-dashboard" class="view-pane flex flex-col gap-6">
-                <!-- Stat Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Stat Cards (UPDATE: Layout disesuaikan menjadi 5 kolom untuk menampung Tim Merah & Putih) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     <!-- KARTU BIRU PREMIUM GRADIENT -->
-                    <div class="bg-gradient-to-br from-blue-600 via-indigo-700 to-indigo-950 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-indigo-950/20 border border-blue-400/20 flex items-center gap-5 transition-transform hover:scale-[1.01]">
-                        <i class="fa-solid fa-clipboard-list absolute right-[-5%] bottom-[-15%] text-[150px] opacity-10"></i>
-                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fa-solid fa-file-signature text-yellow-300"></i></div>
+                    <div class="bg-gradient-to-br from-blue-600 via-indigo-700 to-indigo-950 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-blue-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-clipboard-list absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
+                        <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-file-signature text-yellow-300"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">Total Pendaftar G-Form</p>
-                            <h3 id="stat-pendaftar" class="font-poppins font-bold text-5xl leading-none">0</h3>
+                            <p class="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Total Pendaftar</p>
+                            <h3 id="stat-pendaftar" class="font-poppins font-bold text-3xl leading-none">0</h3>
                         </div>
                     </div>
                     
                     <!-- KARTU SISA KUPON MERDEKA GRADIENT -->
-                    <div class="bg-gradient-to-br from-red-600 via-rose-700 to-rose-950 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-rose-950/20 border border-red-400/20 flex items-center gap-5 transition-transform hover:scale-[1.01]">
-                        <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[150px] opacity-10"></i>
-                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
+                    <div class="bg-gradient-to-br from-red-600 via-rose-700 to-rose-950 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-red-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
+                        <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Paket Snack</p>
-                            <h3 id="stat-kupon" class="font-poppins font-bold text-5xl leading-none">0</h3>
+                            <p class="text-[10px] font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Snack</p>
+                            <h3 id="stat-kupon" class="font-poppins font-bold text-3xl leading-none">0</h3>
                         </div>
                     </div>
 
                     <!-- KARTU HIJAU PREMIUM GRADIENT -->
-                    <div class="bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-teal-800/15 border border-emerald-400/20 flex items-center gap-5 transition-transform hover:scale-[1.01]">
-                        <i class="fa-solid fa-people-group absolute right-[-5%] bottom-[-15%] text-[150px] opacity-10"></i>
-                        <div class="bg-white/20 p-4 rounded-xl text-3xl"><i class="fa-solid fa-qrcode text-emerald-200"></i></div>
+                    <div class="bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-800 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-emerald-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-people-group absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
+                        <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-qrcode text-emerald-200"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-emerald-100 uppercase tracking-wider mb-1">Peserta Sudah Scan</p>
-                            <h3 id="stat-hadir" class="font-poppins font-bold text-5xl leading-none">0</h3>
+                            <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider mb-1">Sudah Scan Hadir</p>
+                            <h3 id="stat-hadir" class="font-poppins font-bold text-3xl leading-none">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- KARTU TIM MERAH PREMIUM GRADIENT (NEW Card 4) -->
+                    <div class="bg-gradient-to-br from-red-500 via-red-600 to-red-800 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-red-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-flag absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
+                        <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-circle text-red-100"></i></div>
+                        <div>
+                            <p class="text-[10px] font-bold text-red-100 uppercase tracking-wider mb-1">Total Tim Merah</p>
+                            <h3 id="stat-tim-merah" class="font-poppins font-bold text-2xl leading-none">0 <span class="text-xs font-normal opacity-85 block mt-1">(0 hadir)</span></h3>
+                        </div>
+                    </div>
+
+                    <!-- KARTU TIM PUTIH PREMIUM GRADIENT (NEW Card 5) -->
+                    <div class="bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 rounded-2xl p-5 text-slate-800 relative overflow-hidden shadow-lg border border-slate-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                        <i class="fa-solid fa-flag absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10 text-slate-500"></i>
+                        <div class="bg-slate-800/10 p-3 rounded-xl text-2xl text-slate-600"><i class="fa-regular fa-circle"></i></div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Tim Putih</p>
+                            <h3 id="stat-tim-putih" class="font-poppins font-bold text-2xl leading-none">0 <span class="text-xs font-normal opacity-85 block mt-1">(0 hadir)</span></h3>
                         </div>
                     </div>
                 </div>
@@ -288,7 +308,7 @@
                 <!-- DIAGRAM LINGKARAN & LOMBA STATS SEJAJAR DENGAN AKSEN BLUE BORDER -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     
-                    <!-- Donut Chart Card (Sejajar, Lebar Sama & Aksen Blue Border Atas) -->
+                    <!-- Donut Chart Card -->
                     <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-chart-pie text-blue-600"></i> Diagram Kehadiran & Status Check-In
@@ -333,7 +353,7 @@
                         </div>
                     </div>
 
-                    <!-- Kategori Lomba Stats (Sejajar & Aksen Blue Border Atas) -->
+                    <!-- Kategori Lomba Stats -->
                     <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-trophy text-yellow-500"></i> Peminat Kategori Lomba
@@ -410,7 +430,7 @@
                         
                         <div class="flex gap-2">
                             <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300">
-                                <i class="fa-solid fa-play"></i> Aktifkan Kamera
+                                <i class="fa-solid fa-play"></i> ... Aktifkan Kamera
                             </button>
                             <button id="btn-stop-camera" onclick="stopScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300 hidden">
                                 <i class="fa-solid fa-stop"></i> Matikan Kamera
@@ -428,7 +448,7 @@
                         </div>
                     </div>
 
-                    <!-- Scan Results Panel (UPDATE: Menambahkan keterangan Tim & Pesan Kupon Hadiah) -->
+                    <!-- Scan Results Panel (UPDATE: Menambahkan keterangan Tim & Pesan Kupon Hadiah & Pita) -->
                     <div class="lg:col-span-7 flex flex-col">
                         <!-- Default standby card -->
                         <div id="result-standby" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-10 text-center flex flex-col items-center justify-center h-full min-h-[350px] gap-3 text-slate-400">
@@ -437,7 +457,7 @@
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
-                        <!-- Success Result Card (UPDATE: Sesuai permintaan penampil info Tim & pesan kupon) -->
+                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -449,9 +469,9 @@
                                 </div>
                             </div>
                             
-                            <!-- PESAN KUPON DAN HADIAH WAJIB (UPDATE) -->
-                            <div class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm">
-                                "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"
+                            <!-- PESAN KUPON, HADIAH, SNACK & PITA SESUAI TIM -->
+                            <div class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
+                                "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span id="res-pita-color" class="font-bold">Merah/Putih</span> sesuai tim"
                             </div>
 
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
@@ -473,7 +493,7 @@
                                         <strong id="res-unit" class="text-slate-700">Memuat...</strong>
                                     </div>
                                     <div>
-                                        <!-- PENAMPIL TIM SUKSES (UPDATE) -->
+                                        <!-- PENAMPIL TIM SUKSES -->
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
@@ -532,7 +552,7 @@
                 </div>
             </div>
 
-            <!-- ================= VIEW 3: DATA PESERTA (UPDATE: Warna Header Biru, Kisi Border Tabel & Dropdown Filter Tim) ================= -->
+            <!-- ================= VIEW 3: DATA PESERTA ================= -->
             <div id="view-peserta" class="view-pane hidden flex flex-col h-full gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
@@ -545,7 +565,7 @@
                                 <input type="text" id="search-peserta" onkeyup="filterParticipantsTable()" placeholder="Cari nama, ID, unit..." class="pl-10 pr-4 py-1.5 w-full sm:w-56 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
                             </div>
                             
-                            <!-- FILTER TIM BARU (UPDATE) -->
+                            <!-- FILTER TIM BARU -->
                             <select id="filter-tim" onchange="filterParticipantsTable()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-600 bg-white">
                                 <option value="Semua">Semua Tim</option>
                                 <option value="Tim Merah">Tim Merah</option>
@@ -577,7 +597,7 @@
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Asal Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <!-- TABEL HEADER TIM BARU (UPDATE) -->
+                                    <!-- TABEL HEADER TIM BARU -->
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan</th>
@@ -683,7 +703,7 @@
         let waLogs = [];
         let html5QrCode = null;
         let attendanceChartInstance = null; // Menyimpan instansi Donut Chart
-        let isScannerActive = false; // Flag pelacak keaktifan pemindai (UPDATE)
+        let isScannerActive = false; // Flag pelacak keaktifan pemindai
 
         // Inisialisasi Program Utama
         window.onload = function() {
@@ -741,8 +761,6 @@
             
             if (payload) {
                 options.method = 'POST';
-                // Menggunakan text/plain agar browser menganggap ini sebagai "Simple Request"
-                // Hal ini sangat ampuh mencegah kegagalan CORS Preflight OPTIONS di server Google Apps Script
                 options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
                 options.body = JSON.stringify({ action: action, ...payload });
             } else {
@@ -768,40 +786,36 @@
                     throw err; // Jangan gunakan proxy jika masalahnya adalah konfigurasi deployment Google
                 }
                 
-                // 2. Jalur Alternatif Mandiri: CORSProxy.io (Mengembalikan JSON murni langsung!)
+                // 2. Jalur Alternatif Mandiri: AllOrigins Proxy (Penanganan tangguh agar tidak memicu JSON parse error)
                 if (!payload) {
                     try {
-                        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-                        const proxyResponse = await fetch(proxyUrl);
-                        if (!proxyResponse.ok) throw new Error("Koneksi Proxy gagal");
-                        const text = await proxyResponse.text();
+                        const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                        const aoResponse = await fetch(allOriginsUrl);
+                        if (!aoResponse.ok) throw new Error("AllOrigins failed");
+                        const aoJson = await aoResponse.json();
+                        const content = aoJson.contents;
                         
-                        if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                        if (content.trim().startsWith("<!DOCTYPE") || content.trim().startsWith("<html")) {
                             throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
                         }
-                        return JSON.parse(text);
-                    } catch (proxyErr) {
-                        console.error("Proxy 1 (Corsproxy.io) gagal:", proxyErr);
+                        return JSON.parse(content);
+                    } catch (aoErr) {
+                        console.error("Proxy AllOrigins gagal:", aoErr);
                         
-                        if (proxyErr.message && proxyErr.message.includes("Anyone")) {
-                            throw proxyErr;
-                        }
-                        
-                        // 3. Jalur Alternatif Kedua: AllOrigins Proxy
+                        // 3. Jalur Alternatif Kedua: Corsproxy.io
                         try {
-                            const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-                            const aoResponse = await fetch(allOriginsUrl);
-                            if (!aoResponse.ok) throw new Error("AllOrigins failed");
-                            const aoJson = await aoResponse.json();
-                            const content = aoJson.contents;
+                            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                            const proxyResponse = await fetch(proxyUrl);
+                            if (!proxyResponse.ok) throw new Error("Koneksi Proxy gagal");
+                            const text = await proxyResponse.text();
                             
-                            if (content.trim().startsWith("<!DOCTYPE") || content.trim().startsWith("<html")) {
+                            if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
                                 throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
                             }
-                            return JSON.parse(content);
-                        } catch (aoErr) {
-                            console.error("Proxy 2 (AllOrigins) gagal:", aoErr);
-                            throw new Error(aoErr.message && aoErr.message.includes("Anyone") ? aoErr.message : "Gagal menarik data dari Google Sheets. Periksa koneksi internet Anda atau pastikan Web App Apps Script di-deploy dengan akses 'Anyone'!");
+                            return JSON.parse(text);
+                        } catch (proxyErr) {
+                            console.error("Proxy Corsproxy.io gagal:", proxyErr);
+                            throw new Error(proxyErr.message && proxyErr.message.includes("Anyone") ? proxyErr.message : "Gagal menarik data dari Google Sheets. Pastikan setelan 'Who has access' di Google Apps Script telah diubah menjadi 'Anyone'!");
                         }
                     }
                 } else {
@@ -1005,14 +1019,25 @@
         }
 
         // Dashboard UI Statistics & Custom Legends (Format ke "Relawan")
+        // UPDATE: Mendukung pembaruan data Tim Merah & Tim Putih ke elemen Card
         function updateDashboardStatsUI(stats) {
             const statPendaftar = document.getElementById('stat-pendaftar');
             const statHadir = document.getElementById('stat-hadir');
             const statKupon = document.getElementById('stat-kupon');
+            const statTimMerah = document.getElementById('stat-tim-merah');
+            const statTimPutih = document.getElementById('stat-tim-putih');
             
             if (statPendaftar) statPendaftar.innerText = stats.totalPendaftar;
             if (statHadir) statHadir.innerText = stats.totalHadir;
             if (statKupon) statKupon.innerText = stats.sisaKupon;
+
+            // Update stats tim baru secara real-time (UPDATE)
+            if (statTimMerah && stats.totalMerah !== undefined) {
+                statTimMerah.innerHTML = `${stats.totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirMerah || 0} hadir)</span>`;
+            }
+            if (statTimPutih && stats.totalPutih !== undefined) {
+                statTimPutih.innerHTML = `${stats.totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirPutih || 0} hadir)</span>`;
+            }
 
             const sl1 = document.getElementById('stat-lomba-1');
             const sl2 = document.getElementById('stat-lomba-2');
@@ -1057,7 +1082,7 @@
             tbody.innerHTML = "";
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-slate-400 text-sm">Tidak ada data pendaftar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-slate-400">Memuat data pendaftar...</td></tr>`;
                 return;
             }
 
@@ -1066,7 +1091,7 @@
                 const textScan = p.waktuScan !== "-" ? p.waktuScan : "Belum Check-In";
                 const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
                 
-                // STYLING BADGE TIM (UPDATE)
+                // STYLING BADGE TIM
                 const isTimMerah = p.tim && p.tim.includes("Merah");
                 const timBadgeClass = isTimMerah 
                     ? "bg-red-100 text-red-700 border-red-200" 
@@ -1082,7 +1107,7 @@
                                 <i class="fa-solid fa-trophy text-amber-500"></i> ${lombaLabel}
                             </span>
                         </td>
-                        <!-- KOLOM DATA TIM (UPDATE) -->
+                        <!-- KOLOM DATA TIM -->
                         <td class="p-4 text-sm font-bold border-r border-slate-200">
                             <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "Tim Merah"}</span>
                         </td>
@@ -1097,7 +1122,7 @@
             });
         }
 
-        // UPDATE: Penambahan filter berdasarkan Tim Baru
+        // Penambahan filter berdasarkan Tim Baru
         function filterParticipantsTable() {
             const queryEl = document.getElementById('search-peserta');
             const filterTimEl = document.getElementById('filter-tim');
@@ -1118,7 +1143,7 @@
                 
                 const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
                 const matchLomba = filterLomba === "Semua" || (p.lomba && p.lomba === filterLomba);
-                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim); // FILTER TIM (UPDATE)
+                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim); // FILTER TIM
                 
                 return matchSearch && matchStatus && matchLomba && matchTim;
             });
@@ -1342,7 +1367,8 @@
                 const rUnit = document.getElementById('res-unit');
                 const rPhone = document.getElementById('res-phone');
                 const rWaktu = document.getElementById('res-waktu');
-                const rTim = document.getElementById('res-tim'); // TIM Sukses check-in (UPDATE)
+                const rTim = document.getElementById('res-tim'); // TIM Sukses check-in
+                const rPitaColor = document.getElementById('res-pita-color'); // Penunjuk Pita Dinamis
                 
                 if (rId) rId.innerText = result.data.id;
                 if (rNama) rNama.innerText = result.data.nama;
@@ -1351,9 +1377,15 @@
                 
                 if (rTim) {
                     rTim.innerText = result.data.tim;
-                    // Styling dinamis warna tim pada sukses card (UPDATE)
+                    // Styling dinamis warna tim pada sukses card
                     const isMerah = result.data.tim && result.data.tim.includes("Merah");
                     rTim.className = isMerah ? "text-lg text-red-600 font-bold" : "text-lg text-blue-600 font-bold";
+                }
+
+                if (rPitaColor) {
+                    const isMerah = result.data.tim && result.data.tim.includes("Merah");
+                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
+                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
