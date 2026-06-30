@@ -26,8 +26,8 @@
             font-family: 'Poppins', sans-serif;
         }
         /* Custom Colors matching Indigo Navy style */
-        .bg-navy-main { background-color: #1e1b4b; } /* Deep Navy */
-        .bg-navy-item { background-color: #312e81; } /* Lighter Navy */
+        .bg-navy-main { background-color: #292a68; } /* Deep Indigo Navy */
+        .bg-navy-item { background-color: #3b3c8f; } /* Lighter Indigo Navy */
         .border-navy-yellow { border-left: 4px solid #fbbf24; }
         .text-navy-yellow { color: #fbbf24; }
         
@@ -54,57 +54,115 @@
             50% { top: 100%; }
             100% { top: 0%; }
         }
+
+        /* ====================================================================
+           OPTIMALISASI SLIDE TOOLTIP DAN TRANSISI
+           ==================================================================== */
+        /* Hover Aktif HANYA saat Sidebar diperkecil */
+        .sidebar-collapsed .nav-btn:hover .menu-tooltip {
+            opacity: 1;
+            transform: translate-x(0);
+            pointer-events: auto;
+        }
+        
+        /* Sembunyikan teks label secara halus di desktop saat sidebar ciut */
+        @media (min-width: 768px) {
+            .sidebar-collapsed-hide {
+                transition: opacity 0.2s ease-in-out, width 0.2s ease-in-out;
+            }
+            .md\:w-20 .sidebar-logo-container {
+                width: 48px !important;
+                height: 48px !important;
+            }
+            .md:w-20 .nav-label {
+                display: none !important;
+            }
+            .md:w-20 #sidebar-title,
+            .md:w-20 #sidebar-user {
+                display: none !important;
+            }
+            .md:w-20 .sidebar-hide-card {
+                display: none !important;
+            }
+            .md:w-20 .nav-btn {
+                justify-content: center !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- 1. SIDEBAR NAVIGATION -->
-    <aside class="w-full md:w-72 bg-navy-main text-white flex flex-col flex-shrink-0 z-20">
-        <div class="p-6 flex items-center justify-between border-b border-indigo-950">
-            <div class="flex items-center gap-3">
-                <div class="bg-yellow-500 text-navy-main rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                </div>
-                <div>
-                    <h2 class="font-poppins font-bold text-lg leading-none">SI-MERDEKA</h2>
-                    <span class="text-xs text-gray-400">biMBA AIUEO</span>
-                </div>
-            </div>
-            <button class="md:hidden text-2xl" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-        </div>
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden md:hidden transition-opacity"></div>
 
-        <div id="sidebar-menu" class="hidden md:flex flex-col flex-grow p-4 gap-6">
-            <div class="bg-white/10 rounded-full text-xs py-2.5 px-4 flex items-center gap-2 my-2 mx-1">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span class="font-medium text-gray-200">Vercel API Connected</span>
+    <!-- 1. SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col transition-all duration-300 z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
+        
+        <!-- SIDEBAR HEADER -->
+        <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
+            <!-- Desktop Collapse Button (Perfect Symmetrical Centering) -->
+            <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-1/2 -translate-x-1/2 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            
+            <!-- Logo area -->
+            <div id="sidebar-logo" class="sidebar-logo-container w-20 h-20 bg-transparent rounded-full flex items-center justify-center mb-4 transition-all duration-300 overflow-hidden">
+                <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
+                     onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
+                     alt="Logo biMBA" 
+                     class="w-full h-full object-contain rounded-full transition-transform duration-350 cursor-pointer"
+                     style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
+                     onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
+                     onmouseout="this.style.transform='scale(1) rotate(0deg)'">
             </div>
             
+            <!-- Judul Utama biMBA AIUEO -->
+            <h1 id="sidebar-title" class="text-white text-lg font-bold text-center leading-tight tracking-wide font-poppins transition-all duration-300">SI-MERDEKA <br> biMBA AIUEO</h1>
+            
+            <!-- Detail Lencana Bawah -->
+            <div id="sidebar-user" class="mt-4 flex items-center gap-2 bg-[#1f2054] border border-[#3b3c8f] rounded-full px-4 py-1.5 shadow-inner text-center transition-all duration-300">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0"></div>
+                <span class="text-[10px] text-gray-200 font-medium whitespace-nowrap">Berbuat Baik dengan Bijaksana</span>
+            </div>
+        </div>
+
+        <!-- MENU SIDEBAR -->
+        <div id="sidebar-menu" class="flex flex-col flex-grow p-4 gap-6 overflow-y-auto">
             <div>
-                <span class="text-gray-400 text-xs font-bold px-3 uppercase tracking-wider block mb-2">Menu Utama</span>
+                <span class="text-gray-400 text-xs font-bold px-3 uppercase tracking-wider block mb-2 nav-label">Menu Utama</span>
                 <nav class="flex flex-col gap-1">
-                    <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-navy-item hover:text-white transition-all text-left w-full">
-                        <i class="fa-solid fa-chart-pie w-5 text-center text-lg"></i>
-                        <span class="font-semibold">Dashboard</span>
+                    <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
+                        <i class="fa-solid fa-chart-pie w-5 text-center text-lg flex-shrink-0"></i>
+                        <span class="font-semibold nav-label whitespace-nowrap">Dashboard</span>
+                        <!-- Slide Tooltip Melayang -->
+                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Dashboard</span>
                     </button>
-                    <button onclick="switchView('scan')" id="btn-scan" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-navy-item hover:text-white transition-all text-left w-full">
-                        <i class="fa-solid fa-qrcode w-5 text-center text-lg"></i>
-                        <span class="font-semibold">Scan Registrasi</span>
+                    <button onclick="switchView('scan')" id="btn-scan" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
+                        <i class="fa-solid fa-qrcode w-5 text-center text-lg flex-shrink-0"></i>
+                        <span class="font-semibold nav-label whitespace-nowrap">Scan Registrasi</span>
+                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Scan Registrasi</span>
                     </button>
-                    <button onclick="switchView('peserta')" id="btn-peserta" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-navy-item hover:text-white transition-all text-left w-full">
-                        <i class="fa-solid fa-users w-5 text-center text-lg"></i>
-                        <span class="font-semibold">Data Kehadiran & Lomba</span>
+                    <button onclick="switchView('peserta')" id="btn-peserta" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
+                        <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0"></i>
+                        <span class="font-semibold nav-label whitespace-nowrap">Data Kehadiran & Lomba</span>
+                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Data Kehadiran & Lomba</span>
                     </button>
-                    <button onclick="switchView('walogs')" id="btn-walogs" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-navy-item hover:text-white transition-all text-left w-full relative">
-                        <i class="fa-solid fa-paper-plane w-5 text-center text-lg text-blue-400"></i>
-                        <span class="font-semibold">Antrean Log Email</span>
-                        <span id="wa-badge-count" class="absolute right-4 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+                    <button onclick="switchView('walogs')" id="btn-walogs" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
+                        <i class="fa-solid fa-paper-plane w-5 text-center text-lg flex-shrink-0 text-blue-400"></i>
+                        <span class="font-semibold nav-label whitespace-nowrap">Antrean Log Email</span>
+                        <span id="wa-badge-count" class="absolute right-4 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full nav-label">0</span>
+                        <span class="menu-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-4 bg-[#1f2054] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 pointer-events-none transition-all duration-200 shadow-lg border border-slate-700/30 whitespace-nowrap">Antrean Log Email</span>
                     </button>
                 </nav>
             </div>
 
             <!-- Settings & Environment Status -->
-            <div class="mt-auto border-t border-indigo-950 pt-4 flex flex-col gap-3">
-                <div class="bg-navy-item/60 p-3 rounded-xl border border-white/5 flex flex-col gap-2">
+            <div class="mt-auto border-t border-[#3b3c8f]/30 pt-4 flex flex-col gap-3 sidebar-hide-card">
+                <div class="bg-[#1f2054] p-3 rounded-xl border border-white/5 flex flex-col gap-2 nav-label">
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pengaturan Notifikasi</span>
                     <label class="relative inline-flex items-center cursor-pointer mt-1">
                         <input type="checkbox" id="toggle-wa" class="sr-only peer" checked>
@@ -113,13 +171,13 @@
                     </label>
                 </div>
                 
-                <button onclick="triggerSetupDatabase()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/20 text-red-200 py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all">
-                    <i class="fa-solid fa-database"></i> Setup / Inisiasi Database
+                <button onclick="triggerSetupDatabase()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/20 text-red-200 py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all nav-label" title="Setup / Inisiasi Database">
+                    <i class="fa-solid fa-database"></i> <span class="nav-label">Setup Database</span>
                 </button>
                 
-                <div class="p-3 bg-navy-item/50 rounded-xl border border-white/5 text-center">
+                <div class="p-3 bg-[#1f2054]/50 rounded-xl border border-white/5 text-center nav-label">
                     <span id="env-badge" class="inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold">
-                        <i class="fa-solid fa-cloud"></i> REST API Connected
+                        <i class="fa-solid fa-cloud"></i> <span class="nav-label">REST API Connected</span>
                     </span>
                 </div>
             </div>
@@ -131,9 +189,15 @@
         
         <!-- TOP NAVBAR -->
         <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <h1 id="page-title" class="font-poppins font-bold text-2xl text-slate-800">Dashboard Registrasi</h1>
-                <p class="text-xs text-slate-500">SI-MERDEKA Hari Pelaksanaan Acara</p>
+            <div class="flex items-center gap-3">
+                <!-- Mobile Sidebar Burger Menu Trigger -->
+                <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl text-slate-700 hover:text-slate-900 transition-colors">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <h1 id="page-title" class="font-poppins font-bold text-2xl text-slate-800">Dashboard Registrasi</h1>
+                    <p class="text-xs text-slate-500">SI-MERDEKA Hari Pelaksanaan Acara</p>
+                </div>
             </div>
             <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
                 <button onclick="syncDatabase()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-colors relative" title="Sinkron Database">
@@ -183,11 +247,11 @@
                     </div>
                 </div>
 
-                <!-- DIAGRAM LINGKARAN & LOMBA STATS SEJAJAR DENGAN AKSEN BLUE BORDER (UPDATE) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <!-- DIAGRAM LINGKARAN & LOMBA STATS SEJAJAR DENGAN AKSEN BLUE BORDER -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     
-                    <!-- Donut Chart Card (Sejajar & Aksen Blue Border Atas) -->
-                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
+                    <!-- Donut Chart Card (Sejajar, Lebar Sama & Aksen Blue Border Atas) -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
                             <i class="fa-solid fa-chart-pie text-blue-600"></i> Diagram Kehadiran & Status Check-In
                         </h3>
@@ -220,7 +284,7 @@
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600 flex flex-col gap-1.5 font-medium">
                                     <div class="flex justify-between">
                                         <span>Target Total Peserta:</span>
-                                        <span id="chart-legend-total" class="text-slate-800 font-bold">0 Anak</span>
+                                        <span id="chart-legend-total" class="text-slate-800 font-bold">0 Relawan</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span>Sisa Kupon & Hadiah:</span>
@@ -307,7 +371,7 @@
                         </div>
                         
                         <div class="flex gap-2">
-                            <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm shadow">
+                            <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300">
                                 <i class="fa-solid fa-play"></i> Aktifkan Kamera
                             </button>
                             <button id="btn-stop-camera" onclick="stopScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300 hidden">
@@ -551,11 +615,11 @@
             const badge = document.getElementById('env-badge');
             if (!badge) return;
             if (isGAS) {
-                badge.className = "inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold";
-                badge.innerHTML = '<i class="fa-solid fa-cloud"></i> REST API Connected';
+                badge.className = "inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold nav-label";
+                badge.innerHTML = '<i class="fa-solid fa-cloud"></i> <span class="nav-label">REST API Connected</span>';
             } else {
-                badge.className = "inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold";
-                badge.innerHTML = '<i class="fa-solid fa-desktop"></i> Mode Simulator Vercel';
+                badge.className = "inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold nav-label";
+                badge.innerHTML = '<i class="fa-solid fa-desktop"></i> <span class="nav-label">Mode Simulator Vercel</span>';
             }
         }
 
@@ -610,11 +674,67 @@
             }
         }
 
+        // TOGGLE SIDEBAR DESKTOP & MOBILE (UPDATE: Mendukung collapse lebar & sembunyikan teks)
         function toggleSidebar() {
+            const sidebar = document.querySelector('aside');
             const menu = document.getElementById('sidebar-menu');
+            const logoTextDiv = sidebar.querySelector('.logo-text');
+            const logo = document.getElementById('sidebar-logo');
+            const title = document.getElementById('sidebar-title');
+            const user = document.getElementById('sidebar-user');
+            
+            if (window.innerWidth < 768) {
+                // Mobile Slide Drawer Toggle
+                toggleMobileSidebar();
+            } else {
+                if (sidebar) {
+                    sidebar.classList.toggle('md:w-72');
+                    sidebar.classList.toggle('md:w-20');
+                    sidebar.classList.toggle('sidebar-collapsed'); // NEW CLASS FOR HOVER TOOLTIP EFFECT
+                    
+                    if (logo) {
+                        logo.classList.toggle('w-20');
+                        logo.classList.toggle('h-20');
+                        logo.classList.toggle('mb-4');
+                        logo.classList.toggle('md:w-12');
+                        logo.classList.toggle('md:h-12');
+                    }
+                    if (title) title.classList.toggle('md:hidden');
+                    if (user) user.classList.toggle('md:hidden');
+                    
+                    const textLabels = sidebar.querySelectorAll('.nav-label, .uppercase, label span');
+                    textLabels.forEach(label => label.classList.toggle('md:hidden'));
+                    
+                    const configCard = sidebar.querySelector('.bg-navy-item\\/60');
+                    if (configCard) configCard.classList.toggle('md:hidden');
+                    
+                    const badgeCard = sidebar.querySelector('.bg-navy-item\\/50');
+                    if (badgeCard) badgeCard.classList.toggle('md:hidden');
+                    
+                    const navBtns = sidebar.querySelectorAll('.nav-btn');
+                    navBtns.forEach(btn => {
+                        btn.classList.toggle('justify-center');
+                        btn.classList.toggle('px-4');
+                    });
+                }
+            }
+        }
+
+        // TOGGLE MOBILE SIDEBAR SLIDE OVERLAY (UPDATE)
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const menu = document.getElementById('sidebar-menu');
+            
+            if (sidebar) {
+                sidebar.classList.toggle('-translate-x-full');
+            }
+            if (overlay) {
+                overlay.classList.toggle('hidden');
+            }
             if (menu) {
-                menu.classList.toggle('hidden');
-                menu.classList.toggle('flex');
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
             }
         }
 
@@ -624,13 +744,13 @@
             if (targetPane) targetPane.classList.remove('hidden');
             
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-navy-item', 'text-white', 'border-navy-yellow');
+                btn.classList.remove('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
                 btn.classList.add('text-gray-300');
             });
             
             const activeBtn = document.getElementById('btn-' + targetViewId);
             if (activeBtn) {
-                activeBtn.classList.add('active', 'bg-navy-item', 'text-white', 'border-navy-yellow');
+                activeBtn.classList.add('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
                 activeBtn.classList.remove('text-gray-300');
             }
 
@@ -650,20 +770,18 @@
             }
             
             if (window.innerWidth < 768) {
-                const menu = document.getElementById('sidebar-menu');
-                if (menu) {
-                    menu.classList.add('hidden');
-                    menu.classList.remove('flex');
-                }
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar) sidebar.classList.add('-translate-x-full');
+                if (overlay) overlay.classList.add('hidden');
             }
         }
 
-        // Mengambil Data lewat REST API Vercel (Diperbarui dengan opsi Background)
+        // Mengambil Data lewat REST API Vercel
         async function syncDatabase(isBackground = false) {
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('fa-spin');
             
-            // Hanya tampilkan layar hitam loading jika ditekan manual, jangan ganggu jika auto-sync
             if (!isBackground) showOverlay(true, "Sedang Sinkronisasi...", "Mengambil data terbaru...");
 
             if (isGAS) {
@@ -702,7 +820,7 @@
             }
         }
 
-        // UPDATE: Merender Donut Chart dengan Chart.js
+        // Merender Donut Chart dengan Chart.js
         function updateAttendanceChart(hadir, belumHadir) {
             const ctx = document.getElementById('attendanceChart');
             if (!ctx) return;
@@ -738,7 +856,7 @@
                                 label: function(context) {
                                     const value = context.raw;
                                     const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return ` ${context.label}: ${value} anak (${pct}%)`;
+                                    return ` ${context.label}: ${value} relawan (${pct}%)`;
                                 }
                             }
                         }
@@ -753,7 +871,7 @@
             }
         }
 
-        // UPDATE: Dashboard UI Statistics & Custom Legends
+        // Dashboard UI Statistics & Custom Legends (UPDATE: Format ke "Relawan")
         function updateDashboardStatsUI(stats) {
             const statPendaftar = document.getElementById('stat-pendaftar');
             const statHadir = document.getElementById('stat-hadir');
@@ -771,7 +889,7 @@
             if (stats.lomba2 !== undefined && sl2) sl2.innerText = stats.lomba2;
             if (stats.lomba3 !== undefined && sl3) sl3.innerText = stats.lomba3;
 
-            // KALKULASI DATA UNTUK DIAGRAM LINGKARAN (UPDATE)
+            // KALKULASI DATA UNTUK DIAGRAM LINGKARAN
             const hadir = Number(stats.totalHadir) || 0;
             const total = Number(stats.totalPendaftar) || 0;
             const belumHadir = Math.max(0, total - hadir);
@@ -789,10 +907,12 @@
             if (rHadirPct) rHadirPct.innerText = persentaseHadir + "% dari total";
             if (rBelum) rBelum.innerText = belumHadir;
             if (rBelumPct) rBelumPct.innerText = persentaseBelum + "% dari total";
-            if (rTotal) rTotal.innerText = total + " Anak";
+            
+            // GANTI FORMAT ANAK MENJADI RELAWAN
+            if (rTotal) rTotal.innerText = total + " Relawan";
             if (rKupon) rKupon.innerText = stats.sisaKupon + " Kupon";
 
-            // Picu Gambar Ulang Diagram Lingkaran
+            // Gambar Ulang Diagram
             updateAttendanceChart(hadir, belumHadir);
         }
 
@@ -920,7 +1040,6 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
             
-            // OPTIMALISASI: Naikkan FPS ke 30 dan sesuaikan qrbox agar scan lebih ngebut!
             const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
             const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "environment" };
 
@@ -936,6 +1055,7 @@
             });
         }
 
+        // UPDATE: Hentikan pemindaian kamera secara aman
         function stopScanner() {
             const btnStart = document.getElementById('btn-start-camera');
             const btnStop = document.getElementById('btn-stop-camera');
@@ -974,7 +1094,6 @@
 
         // Core Verifikasi Check-In VIA REST API POST
         async function processRegistrationCode(idCode) {
-            // Ubah teks overlay agar terasa lebih instan
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
             
@@ -1121,9 +1240,7 @@
             }
         }
 
-        // ====================================================================
-        // MULTI-PLATFORM AUDIO BEP SYNTHESIZER
-        // ====================================================================
+        // Sound Feedback Controller (Fallback to Web Audio API Synthesizer)
         function playSuccessSound() {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
