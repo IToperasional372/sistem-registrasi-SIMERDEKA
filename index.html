@@ -410,7 +410,8 @@
                         <div class="flex flex-col gap-1.5 mt-2">
                             <label for="camera-select" class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-video mr-1"></i> Pilih Perangkat Kamera PC:</label>
                             <div class="flex gap-2">
-                                <select id="camera-select" class="flex-grow border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                                <!-- UPDATE: Integrasi onchange dinamis ketika user mengganti kamera pilihan -->
+                                <select id="camera-select" onchange="onCameraChange()" class="flex-grow border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
                                     <option value="">-- Menunggu Akses Kamera... --</option>
                                 </select>
                                 <button onclick="requestCameraPermission()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow" title="Paksa Minta Izin Kamera">
@@ -494,7 +495,7 @@
                                     </div>
                                     <div>
                                         <!-- PENAMPIL TIM SUKSES -->
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Tim</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
                                     <div class="col-span-2">
@@ -579,7 +580,7 @@
                                 <option value="Tarik Tambang">Tarik Tambang</option>
                             </select>
                             
-                            <!-- UPDATE: Dropdown filter status pendaftaran kini ditambahkan opsi filter "Tidak Hadir" (NEW) -->
+                            <!-- Dropdown filter status pendaftaran kini ditambahkan opsi filter "Tidak Hadir" -->
                             <select id="filter-status" onchange="filterParticipantsTable()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-600 bg-white">
                                 <option value="Semua">Semua Status</option>
                                 <option value="Sudah Hadir">Sudah Hadir</option>
@@ -590,17 +591,14 @@
                     </div>
 
                     <div class="overflow-x-auto flex-grow p-4">
-                        <!-- border penuh dan border warna slate pada tabel -->
                         <table class="w-full text-left border-collapse border border-slate-200">
                             <thead>
-                                <!-- Warna header tabel menggunakan biru tua premium bg-[#292a68] dengan teks putih -->
                                 <tr class="bg-[#292a68] text-white border-b border-[#3b3c8f]">
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Barcode ID</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Asal Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <!-- TABEL HEADER TIM BARU -->
-                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Tim</th>
+                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan</th>
                                     <th class="p-4 text-xs font-bold uppercase text-center">Status</th>
@@ -1095,7 +1093,7 @@
             }
 
             data.forEach(p => {
-                // UPDATE: Menambahkan warna merah transparan lembut khusus untuk status "Tidak Hadir" (NEW)
+                // Menambahkan warna merah transparan lembut khusus untuk status "Tidak Hadir"
                 let badgeClass = "bg-yellow-100 text-yellow-700";
                 if (p.status === "Sudah Hadir") {
                     badgeClass = "bg-green-100 text-green-700";
@@ -1212,7 +1210,12 @@
                 const opt = document.createElement('option');
                 opt.value = device.id;
                 opt.text = device.label || `Kamera ${index + 1}`;
-                if (device.label && (device.label.toLowerCase().includes('logitech') || device.label.toLowerCase().includes('usb') || device.label.toLowerCase().includes('webcam') || device.label.toLowerCase().includes('logi'))) {
+                
+                // UPDATE: Pilih kamera belakang secara default pada HP, atau webcam USB pada PC demi kelancaran scan (NEW)
+                const labelLower = opt.text.toLowerCase();
+                if (labelLower.includes('back') || labelLower.includes('rear') || labelLower.includes('belakang') || labelLower.includes('environment')) {
+                    opt.selected = true;
+                } else if (labelLower.includes('logitech') || labelLower.includes('usb') || labelLower.includes('webcam')) {
                     opt.selected = true;
                 }
                 select.appendChild(opt);
@@ -1239,9 +1242,26 @@
             }
         }
 
+        // UPDATE: Penanganan reset kamera otomatis saat dropdown diganti oleh panitia di lapangan (NEW)
+        async function onCameraChange() {
+            if (isScannerActive && html5QrCode) {
+                try {
+                    showToast("Mengalihkan kamera...", "warning");
+                    await html5QrCode.stop();
+                    isScannerActive = false;
+                    startScanner();
+                } catch (err) {
+                    console.error("Gagal stop saat ganti kamera:", err);
+                    isScannerActive = false;
+                    startScanner();
+                }
+            }
+        }
+
         function startScanner() {
             const select = document.getElementById('camera-select');
             const selectedCameraId = select ? select.value : null;
+            const selectedText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
 
             const camLoading = document.getElementById('camera-loading');
             const scannerLine = document.getElementById('scanner-laser-line');
@@ -1262,9 +1282,16 @@
             }
             
             const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
-            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "user" };
+            
+            // UPDATE: Menentukan arah fallback dinamis (user/environment) sesuai opsi kamera terpilih (NEW)
+            let fallbackFacingMode = "user";
+            if (selectedText.includes("back") || selectedText.includes("rear") || selectedText.includes("belakang") || selectedText.includes("environment")) {
+                fallbackFacingMode = "environment";
+            }
 
-            // Fallback otomatis ke kamera sistem jika ID spesifik tidak ditemukan/error
+            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
+
+            // Memulai kamera terpilih secara dinamis
             html5QrCode.start(
                 targetCamera,
                 config,
@@ -1273,24 +1300,20 @@
             ).then(() => {
                 isScannerActive = true;
             }).catch(err => {
-                console.warn("Gagal memulai dengan kamera spesifik, mencoba fallback...", err);
-                if (selectedCameraId) {
-                    html5QrCode.start(
-                        { facingMode: "user" },
-                        config,
-                        onScanSuccess,
-                        onScanFailure
-                    ).then(() => {
-                        isScannerActive = true;
-                    }).catch(fallbackErr => {
-                        console.error("Camera fallback error:", fallbackErr);
-                        showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
-                        stopScanner();
-                    });
-                } else {
+                console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
+                // Fallback cerdas sesuai arah fisik kamera HP yang dideteksi sebelumnya (UPDATE)
+                html5QrCode.start(
+                    { facingMode: fallbackFacingMode },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                ).then(() => {
+                    isScannerActive = true;
+                }).catch(fallbackErr => {
+                    console.error("Camera fallback error:", fallbackErr);
                     showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
                     stopScanner();
-                }
+                });
             });
         }
 
