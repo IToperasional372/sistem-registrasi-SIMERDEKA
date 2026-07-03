@@ -269,7 +269,7 @@
                         <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Snack</p>
+                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Konsumsi</p>
                             <h3 id="stat-kupon" class="font-poppins font-bold text-3xl leading-none">0</h3>
                         </div>
                     </div>
@@ -470,9 +470,9 @@
                                 </div>
                             </div>
                             
-                            <!-- PESAN KUPON, HADIAH, SNACK & PITA SESUAI TIM -->
+                            <!-- PESAN KUPON, HADIAH, KONSUMSI & PITA SESUAI TIM -->
                             <div id="res-success-msg" class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
-                                "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span id="res-pita-color" class="font-bold">Merah/Putih</span> sesuai tim"
+                                "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, konsumsi, serta pita <span id="res-pita-color" class="font-bold">Merah/Putih</span> sesuai tim"
                             </div>
 
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
@@ -1456,9 +1456,9 @@
                     if (isMerah || isPutih) {
                         let warnaPita = isMerah ? "Merah" : "Putih";
                         let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, konsumsi, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
                     } else {
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan konsumsi"`;
                     }
                 }
                 
