@@ -269,7 +269,7 @@
                         <i class="fa-solid fa-box-open absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
                         <div class="bg-white/20 p-3 rounded-xl text-2xl"><i class="fa-solid fa-ticket text-yellow-300"></i></div>
                         <div>
-                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon Hadiah & Konsumsi</p>
+                            <p class="text-xs font-bold text-red-200 uppercase tracking-wider mb-1">Sisa Kupon & Snack</p>
                             <h3 id="stat-kupon" class="font-poppins font-bold text-3xl leading-none">0</h3>
                         </div>
                     </div>
@@ -407,10 +407,19 @@
                             <i class="fa-solid fa-qrcode text-blue-600"></i> Alat Pemindai & Input
                         </h3>
 
+                        <!-- SAKELAR SORE CHECK-IN / CHECK-OUT (UPDATE: Sesuai SOP & Panduan) -->
+                        <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 mt-2">
+                            <button id="mode-checkin-btn" onclick="setScanMode('checkIn')" class="flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm">
+                                <i class="fa-solid fa-cloud-sun mr-1 text-sm"></i> Check-In (Pagi)
+                            </button>
+                            <button id="mode-checkout-btn" onclick="setScanMode('checkOut')" class="flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200">
+                                <i class="fa-solid fa-gift mr-1 text-sm"></i> Check-Out (Sore)
+                            </button>
+                        </div>
+
                         <div class="flex flex-col gap-1.5 mt-2">
                             <label for="camera-select" class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-video mr-1"></i> Pilih Perangkat Kamera PC:</label>
                             <div class="flex gap-2">
-                                <!-- UPDATE: Integrasi onchange dinamis ketika user mengganti kamera pilihan -->
                                 <select id="camera-select" onchange="onCameraChange()" class="flex-grow border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
                                     <option value="">-- Menunggu Akses Kamera... --</option>
                                 </select>
@@ -470,9 +479,9 @@
                                 </div>
                             </div>
                             
-                            <!-- PESAN KUPON, HADIAH, KONSUMSI & PITA SESUAI TIM -->
+                            <!-- PESAN SAKELAR DINAMIS (UPDATE) -->
                             <div id="res-success-msg" class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
-                                "Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, konsumsi, serta pita <span id="res-pita-color" class="font-bold">Merah/Putih</span> sesuai tim"
+                                "Silakan tunjukkan pesan ini ke panitia..."
                             </div>
 
                             <div class="bg-slate-50 border border-slate-200 rounded-xl p-5">
@@ -495,7 +504,7 @@
                                     </div>
                                     <div>
                                         <!-- PENAMPIL TIM SUKSES -->
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Tim</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
                                     <div class="col-span-2">
@@ -598,7 +607,7 @@
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Asal Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Tim</th>
+                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan</th>
                                     <th class="p-4 text-xs font-bold uppercase text-center">Status</th>
@@ -641,7 +650,7 @@
         </section>
     </main>
 
-    <!-- Guide Modal for API Access Configuration (Panduan Interaktif Otorisasi) -->
+    <!-- Guide Modal for API Access Configuration -->
     <div id="api-error-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-red-100">
             <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
@@ -704,6 +713,7 @@
         let html5QrCode = null;
         let attendanceChartInstance = null; // Menyimpan instansi Donut Chart
         let isScannerActive = false; // Flag pelacak keaktifan pemindai
+        let currentScanMode = "checkIn"; // Status default Mode Pemindaian (UPDATE)
 
         // Inisialisasi Program Utama
         window.onload = function() {
@@ -865,6 +875,34 @@
                 menu.classList.remove('hidden');
                 menu.classList.add('flex');
             }
+        }
+
+        // SAKELAR FILTER MODE JALUR REGISTRASI SORE/PAGI (UPDATE: Sesuai SOP & Panduan)
+        function setScanMode(mode) {
+            currentScanMode = mode;
+            const checkInBtn = document.getElementById('mode-checkin-btn');
+            const checkOutBtn = document.getElementById('mode-checkout-btn');
+            
+            if (mode === "checkIn") {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                showToast("Beralih ke Sesi Check-In Pagi (Kupon & Pita)", "warning");
+            } else {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-indigo-950 text-white shadow-sm";
+                showToast("Beralih ke Sesi Check-Out Sore (Souvenir & Sertifikat)", "warning");
+            }
+            resetScanDisplayToStandby();
+        }
+
+        function resetScanDisplayToStandby() {
+            const standby = document.getElementById('result-standby');
+            const successCard = document.getElementById('result-success');
+            const warningCard = document.getElementById('result-warning');
+
+            if (standby) standby.classList.remove('hidden');
+            if (successCard) successCard.classList.add('hidden');
+            if (warningCard) warningCard.classList.add('hidden');
         }
 
         // Otomatisasi nyalakan kamera ketika masuk tab scan
@@ -1211,7 +1249,7 @@
                 opt.value = device.id;
                 opt.text = device.label || `Kamera ${index + 1}`;
                 
-                // UPDATE: Pilih kamera belakang secara default pada HP, atau webcam USB pada PC demi kelancaran scan (NEW)
+                // Pilih kamera belakang secara default pada HP, atau webcam USB pada PC demi kelancaran scan
                 const labelLower = opt.text.toLowerCase();
                 if (labelLower.includes('back') || labelLower.includes('rear') || labelLower.includes('belakang') || labelLower.includes('environment')) {
                     opt.selected = true;
@@ -1242,7 +1280,7 @@
             }
         }
 
-        // UPDATE: Penanganan reset kamera otomatis saat dropdown diganti oleh panitia di lapangan (NEW)
+        // Penanganan reset kamera otomatis saat dropdown diganti oleh panitia di lapangan
         async function onCameraChange() {
             if (isScannerActive && html5QrCode) {
                 try {
@@ -1283,7 +1321,7 @@
             
             const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
             
-            // UPDATE: Menentukan arah fallback dinamis (user/environment) sesuai opsi kamera terpilih (NEW)
+            // Menentukan arah fallback dinamis (user/environment) sesuai opsi kamera terpilih
             let fallbackFacingMode = "user";
             if (selectedText.includes("back") || selectedText.includes("rear") || selectedText.includes("belakang") || selectedText.includes("environment")) {
                 fallbackFacingMode = "environment";
@@ -1301,7 +1339,6 @@
                 isScannerActive = true;
             }).catch(err => {
                 console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
-                // Fallback cerdas sesuai arah fisik kamera HP yang dideteksi sebelumnya (UPDATE)
                 html5QrCode.start(
                     { facingMode: fallbackFacingMode },
                     config,
@@ -1364,7 +1401,7 @@
             if (mInput) mInput.value = "";
         }
 
-        // Core Verifikasi Check-In VIA REST API POST
+        // Core Verifikasi Check-In VIA REST API POST (UPDATE: Mengirim data "mode")
         async function processRegistrationCode(idCode) {
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
@@ -1374,10 +1411,13 @@
             
             if (isGAS) {
                 try {
-                    const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode });
+                    // UPDATE: Mengirimkan status mode saat ini (checkIn / checkOut) ke Apps Script (NEW)
+                    const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
                     showOverlay(false);
                     displayScanResult(result);
-                    if (result.success && waEnabled) {
+                    
+                    // Email notifikasi hanya dikirim saat Check-In Pagi berhasil (UPDATE)
+                    if (result.success && waEnabled && currentScanMode === "checkIn") {
                         sendEmailNotificationAPI(result.data);
                     }
                     
@@ -1416,6 +1456,7 @@
         }
 
         // Penanganan teks dinamis instruksi pita pada kotak modal registrasi sukses
+        // UPDATE: Mendukung visualisasi sukses & warning untuk Mode Check-In dan Check-Out (NEW)
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1448,18 +1489,29 @@
                     rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
                 }
 
-                // Integrasi Teks Sukses Dinamis dengan / tanpa pita sesuai tim
+                // UPDATE: Integrasi Teks Sukses Dinamis dengan / tanpa pita sesuai tim
                 const resSuccessMsg = document.getElementById('res-success-msg');
-                if (resSuccessMsg) {
+                const badgeTitle = successCard.querySelector('span');
+                
+                if (currentScanMode === "checkIn") {
+                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-check mr-1"></i> BERHASIL DIREGISTRASI`;
                     const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
                     const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
                     if (isMerah || isPutih) {
                         let warnaPita = isMerah ? "Merah" : "Putih";
                         let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, konsumsi, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
                     } else {
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan konsumsi"`;
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
                     }
+                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-In: ${result.data.waktuScan}`;
+                    showToast("Selamat registrasi check-in berhasil!", "success");
+                } else {
+                    // MODE CHECK-OUT SORE (UPDATE)
+                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
+                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
+                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang}`;
+                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
@@ -1467,12 +1519,11 @@
                     resKategori.innerText = result.data.kategori || "-";
                 }
                 
-                if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ${result.data.waktuScan}`;
-                
                 if (successCard) successCard.classList.remove('hidden');
-                showToast("Selamat registrasi berhasil!", "success");
                 syncDatabase(true); // Segarkan data tabel via API secara diam-diam di background
-            } else if (result.alreadyCheckedIn) {
+            
+            } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
+                // PENANGANAN WARNING DINAMIS (UPDATE)
                 playSuccessSound(false);
                 
                 const rwId = document.getElementById('res-warn-id');
@@ -1480,16 +1531,26 @@
                 const rwUnit = document.getElementById('res-warn-unit');
                 const rwWaktu = document.getElementById('res-warn-waktu');
                 const wMsg = document.getElementById('warn-message');
+                const warnBadgeTitle = warningCard.querySelector('span');
                 
                 if (rwId) rwId.innerText = result.data.id;
                 if (rwNama) rwNama.innerText = result.data.nama;
                 if (rwUnit) rwUnit.innerText = "Unit " + result.data.unit;
-                if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
+                
+                if (result.alreadyCheckedIn) {
+                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-1"></i> RE-ENTRY TERDETEKSI`;
+                    if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
+                } else {
+                    // DOUBLE CLAIM SOUVENIR (UPDATE)
+                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> SOUVENIR SUDAH DIAMBIL`;
+                    if (rwWaktu) rwWaktu.innerText = "Selesai: " + result.data.waktuScanPulang;
+                }
+                
                 if (wMsg) wMsg.innerText = result.message;
                 
                 if (warningCard) warningCard.className = "bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in";
                 if (warningCard) warningCard.classList.remove('hidden');
-                showToast("ID sudah terdaftar!", "warning");
+                showToast(result.message, "warning");
             } else {
                 playSuccessSound(false);
                 showToast(result.message, "error");
