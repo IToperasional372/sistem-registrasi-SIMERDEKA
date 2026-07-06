@@ -702,7 +702,7 @@
     <!-- 3. JAVASCRIPT LOGIC -->
     <script>
         // ====================================================================
-        // 🔴 KONFIGURASI API VERCEL (WAJIB DIISI) 🔴
+        // 🔴 KONFIGURASI API VERCEL (WAJIB DIISI DENGAN URL WEB APP ANDA!) 🔴
         // ====================================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
         
@@ -791,12 +791,13 @@
                 return JSON.parse(text);
             } catch (err) {
                 console.warn("Koneksi langsung gagal atau mengembalikan format tidak valid, mencoba jalur proxy cadangan...", err);
+                console.error("Fetch Error Detail:", err);
                 
                 if (err.message && err.message.includes("Anyone")) {
-                    throw err; // Jangan gunakan proxy jika masalahnya adalah konfigurasi deployment Google
+                    throw err; 
                 }
                 
-                // 2. Jalur Alternatif Mandiri: AllOrigins Proxy
+                // 2. Jalur Alternatif Mandiri dengan Pustaka encodeURIComponent (Membetulkan typo 'openURIComponent' lama) (UPDATE)
                 if (!payload) {
                     try {
                         const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
@@ -1369,6 +1370,7 @@
 
         function onScanFailure() {}
 
+        // Mengirimkan kode manual
         function manualSubmit() {
             const inputVal = document.getElementById('manual-input').value.trim();
             if (!inputVal) {
@@ -1380,7 +1382,7 @@
             if (mInput) mInput.value = "";
         }
 
-        // Core Verifikasi Check-In / Check-Out VIA REST API POST
+        // Core Verifikasi Check-In / Check-Out VIA REST API POST (Proteksi Maksimal)
         async function processRegistrationCode(idCode) {
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
@@ -1393,7 +1395,7 @@
                     const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
                     showOverlay(false);
                     displayScanResult(result);
-                    if (result.success && waEnabled) {
+                    if (result && result.success && waEnabled) {
                         result.data.scanMode = currentScanMode; // Sisipkan info mode ke backend
                         sendEmailNotificationAPI(result.data);
                     }
@@ -1430,6 +1432,7 @@
             }
         }
 
+        // Penanganan tampilan hasil pemindaian di layar dengan proteksi crash ganda (UPDATE)
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1438,6 +1441,12 @@
             if (standby) standby.classList.add('hidden');
             if (successCard) successCard.classList.add('hidden');
             if (warningCard) warningCard.classList.add('hidden');
+
+            if (!result) {
+                showToast("Gagal memproses respons server.", "error");
+                if (standby) standby.classList.remove('hidden');
+                return;
+            }
 
             if (result.success) {
                 playSuccessSound(true);
