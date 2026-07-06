@@ -650,6 +650,59 @@
         </section>
     </main>
 
+    <!-- FLOATING BLOCKED CAMERA PANDUAN MODAL (UPDATE: Penyelesaian Mandiri Akses Kamera) -->
+    <div id="camera-blocked-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[110] flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-red-100">
+            <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
+                <i class="fa-solid fa-camera-slash text-2xl"></i>
+                <h3 class="font-poppins font-bold text-lg text-slate-800">Akses Kamera Dibatasi!</h3>
+            </div>
+            
+            <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Browser HP Anda membatasi akses kamera karena masalah protokol keamanan (non-HTTPS) atau izin yang tidak sengaja terblokir.
+            </p>
+
+            <div class="bg-red-50 text-red-800 rounded-xl p-3 text-xs font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-base"></i>
+                <span>Pastikan URL dibuka melalui HTTPS: <br><span class="underline text-blue-700 select-all" id="current-secure-link"></span></span>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-700 font-medium max-h-60 overflow-y-auto pr-1">
+                <!-- Panduan Chrome Android -->
+                <div class="border-l-4 border-blue-500 pl-3">
+                    <p class="font-bold text-slate-900 text-sm mb-1"><i class="fa-brands fa-chrome text-blue-500"></i> Pengguna Android (Google Chrome):</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Ketuk ikon <strong>Gembok / Setelan</strong> di kiri kolom alamat URL browser Anda.</li>
+                        <li>Pilih menu <strong>Izin (Permissions)</strong> atau <strong>Setelan Situs (Site Settings)</strong>.</li>
+                        <li>Aktifkan sakelar <strong>Kamera</strong> ke posisi **Izinkan / Allow**.</li>
+                        <li>Muat ulang (*Refresh*) halaman dashboard Anda.</li>
+                    </ol>
+                </div>
+                
+                <!-- Panduan Safari iOS -->
+                <div class="border-l-4 border-indigo-500 pl-3">
+                    <p class="font-bold text-slate-900 text-sm mb-1"><i class="fa-brands fa-safari text-indigo-500"></i> Pengguna iPhone/iPad (Safari):</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Buka menu <strong>Pengaturan (Settings)</strong> utama pada perangkat Apple Anda.</li>
+                        <li>Gulir ke bawah dan ketuk aplikasi **Safari**.</li>
+                        <li>Di bawah bagian *Setelan Situs Web*, pilih **Kamera**.</li>
+                        <li>Ubah pilihan dari *Tanya* atau *Minta* menjadi **Izinkan (Allow)**.</li>
+                        <li>Kembali ke Safari dan muat ulang halaman dashboard Anda.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+                <button onclick="window.location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-rotate animate-spin-slow"></i> Muat Ulang Halaman
+                </button>
+                <button onclick="toggleCameraBlockedModal(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Guide Modal for API Access Configuration -->
     <div id="api-error-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-red-100">
@@ -725,7 +778,24 @@
             setInterval(() => {
                 if (isGAS) syncDatabase(true); 
             }, 10000); 
+            
+            // Periksa kesiapan keamanan tautan HTTPS dan tampilkan di modal jika diblokir
+            const secureLinkEl = document.getElementById('current-secure-link');
+            if (secureLinkEl) {
+                secureLinkEl.innerText = window.location.href.replace("http://", "https://");
+            }
         };
+
+        function toggleCameraBlockedModal(show) {
+            const modal = document.getElementById('camera-blocked-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        }
 
         function checkAppEnv() {
             const badge = document.getElementById('env-badge');
@@ -1056,7 +1126,7 @@
             }
         }
 
-        // Dashboard UI Statistics & Custom Legends
+        // Dashboard UI Statistics & Custom Legends (Format ke "Relawan")
         function updateDashboardStatsUI(stats) {
             const statPendaftar = document.getElementById('stat-pendaftar');
             const statHadir = document.getElementById('stat-hadir');
@@ -1252,13 +1322,15 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 stream.getTracks().forEach(track => track.stop());
                 showToast("Akses kamera berhasil diizinkan!", "success");
+                toggleCameraBlockedModal(false);
                 loadCameraDevices();
             } catch (err) {
                 console.error("Gagal mendapatkan izin kamera:", err);
+                toggleCameraBlockedModal(true); // Memunculkan modal panduan khusus izin (UPDATE)
                 if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError" || err.message.includes("device not found")) {
                     showToast("Webcam tidak ditemukan! Pasangkan kamera eksternal Anda.", "error");
                 } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                    showToast("Izin kamera ditolak browser. Izinkan melalui gembok URL kiri atas.", "error");
+                    showToast("Izin kamera ditolak browser. Ikuti panduan layar!", "error");
                 } else {
                     showToast("Kamera gagal diakses: " + err.message, "error");
                 }
@@ -1319,8 +1391,11 @@
                 onScanFailure
             ).then(() => {
                 isScannerActive = true;
+                toggleCameraBlockedModal(false);
             }).catch(err => {
                 console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
+                // Mengaktifkan modal bantu penanganan akses kamera (UPDATE)
+                toggleCameraBlockedModal(true);
                 html5QrCode.start(
                     { facingMode: fallbackFacingMode },
                     config,
@@ -1328,9 +1403,10 @@
                     onScanFailure
                 ).then(() => {
                     isScannerActive = true;
+                    toggleCameraBlockedModal(false);
                 }).catch(fallbackErr => {
                     console.error("Camera fallback error:", fallbackErr);
-                    showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
+                    showToast("Kamera dibatasi! Buka panduan bantuan.", "error");
                     stopScanner();
                 });
             });
@@ -1432,7 +1508,6 @@
             }
         }
 
-        // Penanganan tampilan hasil pemindaian di layar dengan proteksi crash ganda (UPDATE)
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
