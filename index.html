@@ -134,9 +134,9 @@
     <!-- 1. SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
         
-        <!-- SIDEBAR HEADER -->
+        <!-- SIDEBAR HEADER (Tombol toggle diposisikan di kiri atas secara simetris) -->
         <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
-            <!-- Desktop Collapse Button -->
+            <!-- Desktop Collapse Button (Symmetrical Left Corner alignment) -->
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-4 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -440,7 +440,7 @@
                         
                         <div class="flex gap-2">
                             <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300">
-                                <i class="fa-solid fa-play"></i> ... Aktifkan Kamera
+                                <i class="fa-solid fa-play"></i> Aktifkan Kamera
                             </button>
                             <button id="btn-stop-camera" onclick="stopScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300 hidden">
                                 <i class="fa-solid fa-stop"></i> Matikan Kamera
@@ -479,7 +479,7 @@
                                 </div>
                             </div>
                             
-                            <!-- PESAN SAKELAR DINAMIS (UPDATE) -->
+                            <!-- PESAN SAKELAR DINAMIS (pita merah/putih/none) -->
                             <div id="res-success-msg" class="bg-emerald-50 border-2 border-emerald-300 text-emerald-800 text-center rounded-xl p-5 mb-5 font-poppins font-bold text-base shadow-sm leading-relaxed">
                                 "Silakan tunjukkan pesan ini ke panitia..."
                             </div>
@@ -702,7 +702,7 @@
     <!-- 3. JAVASCRIPT LOGIC -->
     <script>
         // ====================================================================
-        // 🔴 KONFIGURASI API VERCEL (MENGGUNAKAN API GOOGLE APPS SCRIPT ANDA) 🔴
+        // 🔴 KONFIGURASI API VERCEL (WAJIB DIISI) 🔴
         // ====================================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
         
@@ -713,7 +713,7 @@
         let html5QrCode = null;
         let attendanceChartInstance = null; // Menyimpan instansi Donut Chart
         let isScannerActive = false; // Flag pelacak keaktifan pemindai
-        let currentScanMode = "checkIn"; // Status default Mode Pemindaian (UPDATE)
+        let currentScanMode = "checkIn"; // Status default Mode Pemindaian
 
         // Inisialisasi Program Utama
         window.onload = function() {
@@ -877,7 +877,7 @@
             }
         }
 
-        // SAKELAR FILTER MODE JALUR REGISTRASI SORE/PAGI (UPDATE: Sesuai SOP & Panduan)
+        // SAKELAR FILTER MODE JALUR REGISTRASI SORE/PAGI
         function setScanMode(mode) {
             currentScanMode = mode;
             const checkInBtn = document.getElementById('mode-checkin-btn');
@@ -934,7 +934,6 @@
             if (targetViewId !== 'scan' && isScannerActive) {
                 stopScanner();
             } else if (targetViewId === 'scan') {
-                // Saat berpindah ke menu scan registrasi, kamera langsung dijalankan otomatis!
                 loadCameraDevices();
                 setTimeout(() => {
                     startScanner();
@@ -1063,25 +1062,14 @@
         }
 
         // Dashboard UI Statistics & Custom Legends (Format ke "Relawan")
-        // UPDATE: Mendukung pembaruan data Tim Merah & Tim Putih ke elemen Card
         function updateDashboardStatsUI(stats) {
             const statPendaftar = document.getElementById('stat-pendaftar');
             const statHadir = document.getElementById('stat-hadir');
             const statKupon = document.getElementById('stat-kupon');
-            const statTimMerah = document.getElementById('stat-tim-merah');
-            const statTimPutih = document.getElementById('stat-tim-putih');
             
             if (statPendaftar) statPendaftar.innerText = stats.totalPendaftar;
             if (statHadir) statHadir.innerText = stats.totalHadir;
             if (statKupon) statKupon.innerText = stats.sisaKupon;
-
-            // Update stats tim baru secara real-time
-            if (statTimMerah && stats.totalMerah !== undefined) {
-                statTimMerah.innerHTML = `${stats.totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirMerah || 0} hadir)</span>`;
-            }
-            if (statTimPutih && stats.totalPutih !== undefined) {
-                statTimPutih.innerHTML = `${stats.totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirPutih || 0} hadir)</span>`;
-            }
 
             const sl1 = document.getElementById('stat-lomba-1');
             const sl2 = document.getElementById('stat-lomba-2');
@@ -1131,25 +1119,15 @@
             }
 
             data.forEach(p => {
-                // Menambahkan warna merah transparan lembut khusus untuk status "Tidak Hadir"
-                let badgeClass = "bg-yellow-100 text-yellow-700";
-                if (p.status === "Sudah Hadir") {
-                    badgeClass = "bg-green-100 text-green-700";
-                } else if (p.status === "Tidak Hadir") {
-                    badgeClass = "bg-red-100 text-red-600";
-                }
-                
-                const textScan = p.status === "Sudah Hadir" && p.waktuScan !== "-" ? p.waktuScan : (p.status === "Tidak Hadir" ? "Berhalangan" : "Belum Check-In");
+                const badgeClass = p.status === "Sudah Hadir" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700";
+                const textScan = p.waktuScan !== "-" ? p.waktuScan : "Belum Check-In";
                 const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
                 
-                // STYLING BADGE TIM (Mendukung penanganan tanda "-")
-                const isTimMerah = p.tim && p.tim.toLowerCase().includes("merah");
-                const isTimPutih = p.tim && p.tim.toLowerCase().includes("putih");
+                // STYLING BADGE TIM
+                const isTimMerah = p.tim && p.tim.includes("Merah");
                 const timBadgeClass = isTimMerah 
                     ? "bg-red-100 text-red-700 border-red-200" 
-                    : (isTimPutih 
-                        ? "bg-blue-100 text-blue-700 border-blue-200" 
-                        : "bg-slate-100 text-slate-500 border-slate-200");
+                    : "bg-blue-100 text-blue-700 border-blue-200";
 
                 const row = `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 transition-colors">
@@ -1163,7 +1141,7 @@
                         </td>
                         <!-- KOLOM DATA TIM -->
                         <td class="p-4 text-sm font-bold border-r border-slate-200">
-                            <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "-"}</span>
+                            <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "Tim Merah"}</span>
                         </td>
                         <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
                         <td class="p-4 text-slate-500 text-xs border-r border-slate-200">${textScan}</td>
@@ -1248,22 +1226,18 @@
                 const opt = document.createElement('option');
                 opt.value = device.id;
                 opt.text = device.label || `Kamera ${index + 1}`;
-                
-                // Pilih kamera belakang secara default pada HP, atau webcam USB pada PC demi kelancaran scan
-                const labelLower = opt.text.toLowerCase();
-                if (labelLower.includes('back') || labelLower.includes('rear') || labelLower.includes('belakang') || labelLower.includes('environment')) {
-                    opt.selected = true;
-                } else if (labelLower.includes('logitech') || labelLower.includes('usb') || labelLower.includes('webcam')) {
+                if (device.label && (device.label.toLowerCase().includes('logitech') || device.label.toLowerCase().includes('usb') || device.label.toLowerCase().includes('webcam') || device.label.toLowerCase().includes('logi'))) {
                     opt.selected = true;
                 }
                 select.appendChild(opt);
             });
         }
 
-        // Memperbaiki penanganan error ketika kamera fisik tidak ditemukan
+        // Memperbaiki penanganan error ketika kamera fisik tidak ditemukan (Requested device not found)
         async function requestCameraPermission() {
             showToast("Meminta izin akses kamera...", "warning");
             try {
+                // Gunakan constraint minimal untuk memicu dialog izin browser
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 stream.getTracks().forEach(track => track.stop());
                 showToast("Akses kamera berhasil diizinkan!", "success");
@@ -1280,26 +1254,9 @@
             }
         }
 
-        // Penanganan reset kamera otomatis saat dropdown diganti oleh panitia di lapangan
-        async function onCameraChange() {
-            if (isScannerActive && html5QrCode) {
-                try {
-                    showToast("Mengalihkan kamera...", "warning");
-                    await html5QrCode.stop();
-                    isScannerActive = false;
-                    startScanner();
-                } catch (err) {
-                    console.error("Gagal stop saat ganti kamera:", err);
-                    isScannerActive = false;
-                    startScanner();
-                }
-            }
-        }
-
         function startScanner() {
             const select = document.getElementById('camera-select');
             const selectedCameraId = select ? select.value : null;
-            const selectedText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
 
             const camLoading = document.getElementById('camera-loading');
             const scannerLine = document.getElementById('scanner-laser-line');
@@ -1320,16 +1277,9 @@
             }
             
             const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
-            
-            // Menentukan arah fallback dinamis (user/environment) sesuai opsi kamera terpilih
-            let fallbackFacingMode = "user";
-            if (selectedText.includes("back") || selectedText.includes("rear") || selectedText.includes("belakang") || selectedText.includes("environment")) {
-                fallbackFacingMode = "environment";
-            }
+            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: "user" };
 
-            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
-
-            // Memulai kamera terpilih secara dinamis
+            // Fallback otomatis ke kamera sistem jika ID spesifik tidak ditemukan/error
             html5QrCode.start(
                 targetCamera,
                 config,
@@ -1338,19 +1288,24 @@
             ).then(() => {
                 isScannerActive = true;
             }).catch(err => {
-                console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
-                html5QrCode.start(
-                    { facingMode: fallbackFacingMode },
-                    config,
-                    onScanSuccess,
-                    onScanFailure
-                ).then(() => {
-                    isScannerActive = true;
-                }).catch(fallbackErr => {
-                    console.error("Camera fallback error:", fallbackErr);
+                console.warn("Gagal memulai dengan kamera spesifik, mencoba fallback...", err);
+                if (selectedCameraId) {
+                    html5QrCode.start(
+                        { facingMode: "user" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        isScannerActive = true;
+                    }).catch(fallbackErr => {
+                        console.error("Camera fallback error:", fallbackErr);
+                        showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
+                        stopScanner();
+                    });
+                } else {
                     showToast("Kamera tidak ditemukan atau izin ditolak.", "error");
                     stopScanner();
-                });
+                }
             });
         }
 
@@ -1400,7 +1355,8 @@
             const mInput = document.getElementById('manual-input');
             if (mInput) mInput.value = "";
         }
-        // Core Verifikasi Check-In VIA REST API POST
+
+        // Core Verifikasi Check-In VIA REST API POST (UPDATE: Mengirim data "mode")
         async function processRegistrationCode(idCode) {
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
@@ -1410,44 +1366,18 @@
             
             if (isGAS) {
                 try {
-                    // Mengirimkan status mode saat ini (checkIn / checkOut) ke Apps Script
+                    // SAKELAR SESI SECARA DINAMIS DIKIRIM KE GOOGLE SCRIPTS (UPDATE)
                     const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
                     showOverlay(false);
                     displayScanResult(result);
-                    
-                    // UPDATE: Email notifikasi sekarang dikirim untuk KEDUA sesi (Check-In & Check-Out)
                     if (result.success && waEnabled) {
-                        result.data.scanMode = currentScanMode; // Sisipkan info mode ke backend
+                        // SAKELAR MODEL EMAIL NOTIFIKASI SORE/PAGI BERHASIL DIAKTIFKAN (UPDATE)
+                        result.data.scanMode = currentScanMode;
                         sendEmailNotificationAPI(result.data);
-                    }
-                    
-                    // SISTEM COOLDOWN & AUTO-RESTART KAMERA (5 DETIK)
-                    // Kamera mati 5 detik agar panitia sempat melihat hasil scan, lalu otomatis menyala kembali
-                    const activePane = document.querySelector('.view-pane:not(.hidden)');
-                    if (activePane && activePane.id === 'view-scan') {
-                        showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
-                        setTimeout(() => {
-                            const currentPane = document.querySelector('.view-pane:not(.hidden)');
-                            if (currentPane && currentPane.id === 'view-scan') {
-                                startScanner();
-                                showToast("Scanner aktif otomatis! Siap memindai.", "success");
-                            }
-                        }, 5000);
                     }
                 } catch(err) {
                     showOverlay(false);
                     showToast("Koneksi API gagal: " + err.message, "error");
-                    
-                    // Fallback restart otomatis jika terjadi error koneksi
-                    const activePane = document.querySelector('.view-pane:not(.hidden)');
-                    if (activePane && activePane.id === 'view-scan') {
-                        setTimeout(() => {
-                            const currentPane = document.querySelector('.view-pane:not(.hidden)');
-                            if (currentPane && currentPane.id === 'view-scan') {
-                                startScanner();
-                            }
-                        }, 3000);
-                    }
                 }
             } else {
                 showOverlay(false);
@@ -1455,8 +1385,6 @@
             }
         }
 
-        // Penanganan teks dinamis instruksi pita pada kotak modal registrasi sukses
-        // UPDATE: Mendukung visualisasi sukses & warning untuk Mode Check-In dan Check-Out (NEW)
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1475,6 +1403,7 @@
                 const rPhone = document.getElementById('res-phone');
                 const rWaktu = document.getElementById('res-waktu');
                 const rTim = document.getElementById('res-tim'); // TIM Sukses check-in
+                const rPitaColor = document.getElementById('res-pita-color'); // Penunjuk Pita Dinamis
                 
                 if (rId) rId.innerText = result.data.id;
                 if (rNama) rNama.innerText = result.data.nama;
@@ -1482,36 +1411,16 @@
                 if (rPhone) rPhone.innerText = result.data.phone;
                 
                 if (rTim) {
-                    rTim.innerText = result.data.tim || "-";
+                    rTim.innerText = result.data.tim;
                     // Styling dinamis warna tim pada sukses card
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
-                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
+                    const isMerah = result.data.tim && result.data.tim.includes("Merah");
+                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : "text-lg text-blue-600 font-bold";
                 }
 
-                // UPDATE: Integrasi Teks Sukses Dinamis dengan / tanpa pita sesuai tim
-                const resSuccessMsg = document.getElementById('res-success-msg');
-                const badgeTitle = successCard.querySelector('span');
-                
-                if (currentScanMode === "checkIn") {
-                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-check mr-1"></i> BERHASIL DIREGISTRASI`;
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
-                    if (isMerah || isPutih) {
-                        let warnaPita = isMerah ? "Merah" : "Putih";
-                        let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
-                    } else {
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
-                    }
-                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-In: ${result.data.waktuScan}`;
-                    showToast("Selamat registrasi check-in berhasil!", "success");
-                } else {
-                    // MODE CHECK-OUT SORE (UPDATE)
-                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
-                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
-                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang}`;
-                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
+                if (rPitaColor) {
+                    const isMerah = result.data.tim && result.data.tim.includes("Merah");
+                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
+                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
@@ -1519,11 +1428,12 @@
                     resKategori.innerText = result.data.kategori || "-";
                 }
                 
+                if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ${result.data.waktuScan}`;
+                
                 if (successCard) successCard.classList.remove('hidden');
+                showToast("Selamat registrasi berhasil!", "success");
                 syncDatabase(true); // Segarkan data tabel via API secara diam-diam di background
-            
-            } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
-                // PENANGANAN WARNING DINAMIS (UPDATE)
+            } else if (result.alreadyCheckedIn) {
                 playSuccessSound(false);
                 
                 const rwId = document.getElementById('res-warn-id');
@@ -1531,26 +1441,16 @@
                 const rwUnit = document.getElementById('res-warn-unit');
                 const rwWaktu = document.getElementById('res-warn-waktu');
                 const wMsg = document.getElementById('warn-message');
-                const warnBadgeTitle = warningCard.querySelector('span');
                 
                 if (rwId) rwId.innerText = result.data.id;
                 if (rwNama) rwNama.innerText = result.data.nama;
                 if (rwUnit) rwUnit.innerText = "Unit " + result.data.unit;
-                
-                if (result.alreadyCheckedIn) {
-                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-1"></i> RE-ENTRY TERDETEKSI`;
-                    if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
-                } else {
-                    // DOUBLE CLAIM SOUVENIR (UPDATE)
-                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> SOUVENIR SUDAH DIAMBIL`;
-                    if (rwWaktu) rwWaktu.innerText = "Selesai: " + result.data.waktuScanPulang;
-                }
-                
+                if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
                 if (wMsg) wMsg.innerText = result.message;
                 
                 if (warningCard) warningCard.className = "bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in";
                 if (warningCard) warningCard.classList.remove('hidden');
-                showToast(result.message, "warning");
+                showToast("ID sudah terdaftar!", "warning");
             } else {
                 playSuccessSound(false);
                 showToast(result.message, "error");
