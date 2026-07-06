@@ -1400,8 +1400,7 @@
             const mInput = document.getElementById('manual-input');
             if (mInput) mInput.value = "";
         }
-
-        // Core Verifikasi Check-In VIA REST API POST (UPDATE: Mengirim data "mode")
+        // Core Verifikasi Check-In VIA REST API POST
         async function processRegistrationCode(idCode) {
             showOverlay(true, "Memverifikasi Barcode...", "Mencocokkan data ke server...");
             const normalizedCode = idCode.trim().toUpperCase();
@@ -1411,13 +1410,14 @@
             
             if (isGAS) {
                 try {
-                    // UPDATE: Mengirimkan status mode saat ini (checkIn / checkOut) ke Apps Script (NEW)
+                    // Mengirimkan status mode saat ini (checkIn / checkOut) ke Apps Script
                     const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
                     showOverlay(false);
                     displayScanResult(result);
                     
-                    // Email notifikasi hanya dikirim saat Check-In Pagi berhasil (UPDATE)
-                    if (result.success && waEnabled && currentScanMode === "checkIn") {
+                    // UPDATE: Email notifikasi sekarang dikirim untuk KEDUA sesi (Check-In & Check-Out)
+                    if (result.success && waEnabled) {
+                        result.data.scanMode = currentScanMode; // Sisipkan info mode ke backend
                         sendEmailNotificationAPI(result.data);
                     }
                     
