@@ -499,12 +499,12 @@
                                         <strong id="res-nama" class="text-lg text-slate-800">Memuat...</strong>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Lokasi Kantor/Unit</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Asal Unit biMBA</p>
                                         <strong id="res-unit" class="text-slate-700">Memuat...</strong>
                                     </div>
                                     <div>
                                         <!-- PENAMPIL TIM SUKSES -->
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Tim</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
                                     <div class="col-span-2">
@@ -547,7 +547,7 @@
                                         <strong id="res-warn-nama" class="text-lg text-slate-800">-</strong>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Lokasi Kantor/Unit</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Asal Unit biMBA</p>
                                         <strong id="res-warn-unit" class="text-slate-700">-</strong>
                                     </div>
                                     <div>
@@ -609,7 +609,7 @@
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
-                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Waktu Scan Datang</th>
+                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Log Presensi (Datang / Pulang)</th>
                                     <th class="p-4 text-xs font-bold uppercase text-center">Status</th>
                                 </tr>
                             </thead>
@@ -650,7 +650,7 @@
         </section>
     </main>
 
-    <!-- FLOATING BLOCKED CAMERA PANDUAN MODAL (UPDATE: Penyelesaian Mandiri Akses Kamera) -->
+    <!-- FLOATING BLOCKED CAMERA PANDUAN MODAL (Penyelesaian Mandiri Akses Kamera) -->
     <div id="camera-blocked-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[110] flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-red-100">
             <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
@@ -694,7 +694,7 @@
 
             <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
                 <button onclick="window.location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5">
-                    <i class="fa-solid fa-arrows-rotate animate-spin-slow"></i> Muat Ulang Halaman
+                    <i class="fa-solid fa-arrows-rotate"></i> Muat Ulang Halaman
                 </button>
                 <button onclick="toggleCameraBlockedModal(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
                     Tutup
@@ -1178,7 +1178,7 @@
             updateAttendanceChart(hadir, belumHadir);
         }
 
-        // Render tabel pendaftar dengan border sekeliling & kisi pembatas kolom
+        // Render tabel pendaftar dengan penempatan Log Presensi dua baris yang premium (UPDATE)
         function renderPesertaTable(data) {
             const tbody = document.getElementById('peserta-table-body');
             if (!tbody) return;
@@ -1198,7 +1198,6 @@
                     badgeClass = "bg-red-100 text-red-600";
                 }
                 
-                const textScan = p.status === "Sudah Hadir" && p.waktuScan !== "-" ? p.waktuScan : (p.status === "Tidak Hadir" ? "Berhalangan" : "Belum Check-In");
                 const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
                 
                 // STYLING BADGE TIM
@@ -1210,22 +1209,33 @@
                         ? "bg-blue-100 text-blue-700 border-blue-200" 
                         : "bg-slate-100 text-slate-500 border-slate-200");
 
+                // PEMBUATAN FORMAT LOG PRESENSI DUA BARIS YANG ELEGAN (UPDATE)
+                const datangText = p.waktuScan !== "-" 
+                    ? `<span class="text-emerald-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Datang: ${p.waktuScan}</span>` 
+                    : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Belum Datang</span>`;
+                
+                const pulangText = p.waktuScanPulang !== "-" 
+                    ? `<span class="text-indigo-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Pulang: ${p.waktuScanPulang}</span>` 
+                    : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Belum Pulang</span>`;
+                
+                const presensiLog = `<div class="flex flex-col text-xs gap-0.5">${datangText}${pulangText}</div>`;
+
                 const row = `
                     <tr class="hover:bg-slate-50 border-b border-slate-200 transition-colors">
                         <td class="p-4 font-bold text-slate-700 text-sm border-r border-slate-200">${p.id}</td>
                         <td class="p-4 font-semibold text-slate-800 text-sm border-r border-slate-200">${p.nama}</td>
-                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200"> ${p.unit}</td>
+                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.unit}</td>
                         <td class="p-4 text-sm font-semibold text-slate-700 border-r border-slate-200">
                             <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs">
                                 <i class="fa-solid fa-trophy text-amber-500"></i> ${lombaLabel}
                             </span>
                         </td>
-                        <!-- KOLOM DATA TIM -->
                         <td class="p-4 text-sm font-bold border-r border-slate-200">
                             <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "-"}</span>
                         </td>
                         <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
-                        <td class="p-4 text-slate-500 text-xs border-r border-slate-200">${textScan}</td>
+                        <!-- KOLOM LOG PRESENSI DUA BARIS YANG TERLIHAT SANGAT PROFESIONAL (UPDATE) -->
+                        <td class="p-4 border-r border-slate-200">${presensiLog}</td>
                         <td class="p-4 text-center">
                             <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeClass}">${p.status}</span>
                         </td>
@@ -1326,7 +1336,7 @@
                 loadCameraDevices();
             } catch (err) {
                 console.error("Gagal mendapatkan izin kamera:", err);
-                toggleCameraBlockedModal(true); // Memunculkan modal panduan khusus izin (UPDATE)
+                toggleCameraBlockedModal(true); 
                 if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError" || err.message.includes("device not found")) {
                     showToast("Webcam tidak ditemukan! Pasangkan kamera eksternal Anda.", "error");
                 } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -1394,7 +1404,6 @@
                 toggleCameraBlockedModal(false);
             }).catch(err => {
                 console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
-                // Mengaktifkan modal bantu penanganan akses kamera (UPDATE)
                 toggleCameraBlockedModal(true);
                 html5QrCode.start(
                     { facingMode: fallbackFacingMode },
