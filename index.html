@@ -427,6 +427,7 @@
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
+                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -1270,6 +1271,11 @@
             stopScanner();
         }
 
+        // ADDED TO RESOLVE REFERENCERROR (FIXED)
+        function onScanFailure(error) {
+            // Meredam log warning berkala dari pembacaan kamera agar konsol tidak banjir log
+        }
+
         // BINDING FUNCTIONS TO THE WINDOW SCOPE
         window.switchView = switchView;
         window.setScanMode = setScanMode;
@@ -1284,6 +1290,8 @@
         window.manualSubmit = manualSubmit;
         window.toggleCameraBlockedModal = toggleCameraBlockedModal;
         window.clearWaLogs = clearWaLogs;
+        window.onScanSuccess = onScanSuccess;
+        window.onScanFailure = onScanFailure; // BIND GLOBALLY TO PREVENT REFERENCEERROR (FIXED)
         window.syncDatabase = () => {
             showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
             startFirestoreRealtimeSync();
