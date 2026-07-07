@@ -16,6 +16,11 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <!-- Chart.js CDN (Untuk Donut Chart Interaktif) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FIREBASE SDK COMPATIBILITY MODE -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <style>
         body {
@@ -25,13 +30,11 @@
         .font-poppins {
             font-family: 'Poppins', sans-serif;
         }
-        /* Custom Colors matching Indigo Navy style */
-        .bg-navy-main { background-color: #292a68; } /* Deep Indigo Navy */
-        .bg-navy-item { background-color: #3b3c8f; } /* Lighter Indigo Navy */
+        .bg-navy-main { background-color: #292a68; }
+        .bg-navy-item { background-color: #3b3c8f; }
         .border-navy-yellow { border-left: 4px solid #fbbf24; }
         .text-navy-yellow { color: #fbbf24; }
         
-        /* Laser scanning effect overlay */
         .scanner-lasers {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -59,19 +62,16 @@
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Hover Aktif HANYA saat Sidebar diperkecil */
         .sidebar-collapsed .nav-btn:hover .menu-tooltip {
             opacity: 1;
             visibility: visible;
-            left: calc(100% + 12px); /* Efek slide */
+            left: calc(100% + 12px);
         }
         
-        /* Mencegah Tooltip terpotong oleh Scrollbar */
         .sidebar-collapsed #sidebar-menu {
             overflow: visible !important;
         }
 
-        /* Gaya Tooltip Melayang */
         .menu-tooltip {
             position: absolute;
             top: 50%;
@@ -94,10 +94,10 @@
         }
 
         .sidebar-collapsed {
-            width: 5rem !important; /* Menciut paksa ke w-20 (80px) */
+            width: 5rem !important;
         }
         .sidebar-collapsed #sidebar-logo {
-            width: 3rem !important; /* h-12 w-12 */
+            width: 3rem !important;
             height: 3rem !important;
             margin-bottom: 0px !important;
         }
@@ -123,13 +123,11 @@
 </head>
 <body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- Mobile Sidebar Backdrop Overlay -->
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden md:hidden transition-opacity"></div>
 
     <!-- 1. SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="bg-[#292a68] w-72 flex-shrink-0 h-screen md:h-auto flex flex-col z-50 fixed md:relative -translate-x-full md:translate-x-0 shadow-xl">
         
-        <!-- SIDEBAR HEADER -->
         <div id="sidebar-header" class="pt-20 pb-6 px-4 flex flex-col items-center border-b border-[#3b3c8f]/50 relative transition-all duration-300">
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Perkecil/Perbesar Sidebar" class="absolute top-4 left-4 p-2 bg-[#1f2054] border border-[#3b3c8f] hover:bg-[#32337a] rounded-xl text-white transition-all hidden md:block z-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,10 +139,7 @@
                 <img src="https://drive.google.com/thumbnail?id=1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF&sz=w150" 
                      onerror="this.src='https://lh3.googleusercontent.com/d/1E9HTjJw0PVEORIqBLof8ifE1RLDk-2mF'" 
                      alt="Logo biMBA" 
-                     class="w-full h-full object-contain rounded-full transition-transform duration-300 cursor-pointer"
-                     style="transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
-                     onmouseover="this.style.transform='scale(1.15) rotate(5deg)'" 
-                     onmouseout="this.style.transform='scale(1) rotate(0deg)'">
+                     class="w-full h-full object-contain rounded-full transition-transform duration-300 cursor-pointer">
             </div>
             
             <h1 id="sidebar-title" class="text-white text-lg font-bold text-center leading-tight tracking-wide font-poppins transition-all duration-300">SI-MERDEKA <br> biMBA AIUEO</h1>
@@ -155,7 +150,6 @@
             </div>
         </div>
 
-        <!-- MENU SIDEBAR -->
         <div id="sidebar-menu" class="flex flex-col flex-grow p-4 gap-6 overflow-y-auto transition-all duration-300">
             <div>
                 <span class="text-gray-400 text-xs font-bold px-3 uppercase tracking-wider block mb-2 nav-label">Menu Utama</span>
@@ -172,8 +166,8 @@
                     </button>
                     <button onclick="switchView('peserta')" id="btn-peserta" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-users w-5 text-center text-lg flex-shrink-0"></i>
-                        <span class="font-semibold nav-label whitespace-nowrap">Data Kehadiran & Lomba</span>
-                        <span class="menu-tooltip">Data Kehadiran & Lomba</span>
+                        <span class="font-semibold nav-label whitespace-nowrap">Data Kehadiran</span>
+                        <span class="menu-tooltip">Data Kehadiran</span>
                     </button>
                     <button onclick="switchView('walogs')" id="btn-walogs" class="nav-btn flex items-center gap-4 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#3b3c8f] hover:text-white transition-all text-left w-full relative">
                         <i class="fa-solid fa-paper-plane w-5 text-center text-lg flex-shrink-0 text-blue-400"></i>
@@ -184,7 +178,6 @@
                 </nav>
             </div>
 
-            <!-- Settings & Environment Status -->
             <div class="mt-auto border-t border-[#3b3c8f]/30 pt-4 flex flex-col gap-3 sidebar-hide-card">
                 <div class="bg-[#1f2054] p-3 rounded-xl border border-white/5 flex flex-col gap-2 nav-label">
                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pengaturan Notifikasi</span>
@@ -195,11 +188,11 @@
                     </label>
                 </div>
                 
-                <button onclick="importSheetsToFirebase()" class="w-full bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/20 text-emerald-200 py-2 px-4 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all nav-label" title="Tarik Data G-Sheets Ke Firebase">
+                <button onclick="importSheetsToFirebase()" class="w-full bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/20 text-emerald-200 py-2 px-4 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all nav-label">
                     <i class="fa-solid fa-cloud-arrow-down"></i> <span class="nav-label">Sinkron Sheets ➔ Firebase</span>
                 </button>
-
-                <button onclick="triggerSetupDatabase()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/20 text-red-200 py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all nav-label" title="Setup / Inisiasi Database">
+                
+                <button onclick="triggerSetupDatabase()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/20 text-red-200 py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all nav-label">
                     <i class="fa-solid fa-database"></i> <span class="nav-label">Setup Database Sheets</span>
                 </button>
                 
@@ -212,10 +205,8 @@
         </div>
     </aside>
 
-    <!-- 2. MAIN WORKSPACE -->
     <main class="flex-grow flex flex-col min-w-0 bg-[#f8fafc]">
         
-        <!-- TOP NAVBAR -->
         <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileSidebar()" class="md:hidden text-2xl text-slate-700 hover:text-slate-900 transition-colors">
@@ -237,12 +228,10 @@
             </div>
         </header>
 
-        <!-- VIEW AREA -->
         <section id="content-container" class="flex-grow p-6 md:p-8 overflow-y-auto">
 
             <!-- ================= VIEW 1: DASHBOARD ================= -->
             <div id="view-dashboard" class="view-pane flex flex-col gap-6">
-                <!-- Stat Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     <div class="bg-gradient-to-br from-blue-600 via-indigo-700 to-indigo-950 rounded-2xl p-5 text-white relative overflow-hidden shadow-lg border border-blue-400/20 flex items-center gap-4 transition-transform hover:scale-[1.01]">
                         <i class="fa-solid fa-clipboard-list absolute right-[-5%] bottom-[-15%] text-[110px] opacity-10"></i>
@@ -290,7 +279,6 @@
                     </div>
                 </div>
 
-                <!-- DIAGRAM LINGKARAN & LOMBA STATS -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                     <div class="bg-white rounded-2xl p-6 border border-slate-200 border-t-[8px] border-t-blue-600 shadow-sm flex flex-col justify-between h-full">
                         <h3 class="font-poppins font-bold text-lg text-indigo-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -382,7 +370,6 @@
                             <i class="fa-solid fa-qrcode text-blue-600"></i> Alat Pemindai & Input
                         </h3>
 
-                        <!-- SAKELAR SORE CHECK-IN / CHECK-OUT -->
                         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 mt-2">
                             <button id="mode-checkin-btn" onclick="setScanMode('checkIn')" class="flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm">
                                 <i class="fa-solid fa-cloud-sun mr-1 text-sm"></i> Check-In (Pagi)
@@ -433,7 +420,6 @@
                         </div>
                     </div>
 
-                    <!-- Scan Results Panel -->
                     <div class="lg:col-span-7 flex flex-col">
                         <div id="result-standby" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-10 text-center flex flex-col items-center justify-center h-full min-h-[350px] gap-3 text-slate-400">
                             <i class="fa-solid fa-qrcode text-7xl text-slate-300 animate-pulse"></i>
@@ -441,7 +427,6 @@
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
-                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -491,7 +476,6 @@
                             </div>
                         </div>
 
-                        <!-- Warning/Already Checked In Card -->
                         <div id="result-warning" class="hidden bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-4xl">
@@ -652,10 +636,10 @@
                     <p class="font-bold text-slate-900 text-sm mb-1"><i class="fa-brands fa-safari text-indigo-500"></i> Pengguna iPhone/iPad (Safari):</p>
                     <ol class="list-decimal pl-4 space-y-1">
                         <li>Buka menu <strong>Pengaturan (Settings)</strong> utama pada perangkat Apple Anda.</li>
-                        <li>Gulir ke bawah dan ketuk aplikasi **Safari**.</li>
+                        <li>Gulir ke bawah and ketuk aplikasi **Safari**.</li>
                         <li>Di bawah bagian *Setelan Situs Web*, pilih **Kamera**.</li>
                         <li>Ubah pilihan dari *Tanya* atau *Minta* menjadi **Izinkan (Allow)**.</li>
-                        <li>Kembali ke Safari dan muat ulang halaman dashboard Anda.</li>
+                        <li>Kembali ke Safari and muat ulang halaman dashboard Anda.</li>
                     </ol>
                 </div>
             </div>
@@ -665,6 +649,38 @@
                     <i class="fa-solid fa-arrows-rotate"></i> Muat Ulang Halaman
                 </button>
                 <button onclick="toggleCameraBlockedModal(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guide Modal for API Access Configuration -->
+    <div id="api-error-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-red-100">
+            <div class="flex items-center gap-3 text-red-600 mb-4 pb-3 border-b border-slate-100">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h3 class="font-poppins font-bold text-lg text-slate-800">Akses API Google Terkunci!</h3>
+            </div>
+            <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Sistem mendeteksi kegagalan komunikasi dengan Google Sheets. Hal ini umumnya terjadi karena setelan keamanan Web App di Google Apps Script Anda masih dikunci sebagai <span class="text-red-600 font-bold">Only myself</span> (Hanya Saya).
+            </p>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 space-y-2.5 mb-6 font-medium">
+                <p class="font-bold text-slate-800 text-sm mb-1">🛠️ Cara Membuka Akses (Wajib):</p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Buka editor <strong>Google Apps Script</strong> proyek Anda.</li>
+                    <li>Klik tombol biru <strong>Deploy</strong> (Terapkan) di pojok kanan atas.</li>
+                    <li>Pilih <strong>Manage deployments</strong> (Kelola penerapan).</li>
+                    <li>Klik ikon <strong>Pensil (Edit)</strong> pada versi aktif Anda saat ini.</li>
+                    <li>Ubah setelan <strong>Who has access</strong> (Siapa yang memiliki akses) dari <span class="text-red-600 font-bold">Only myself</span> menjadi <span class="text-green-600 font-bold">Anyone</span> (Siapa saja).</li>
+                    <li>Klik tombol <strong>Deploy</strong> untuk menerapkan versi baru tersebut.</li>
+                </ol>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="window.open('https://script.google.com/', '_blank')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Apps Script
+                </button>
+                <button onclick="toggleApiErrorModal(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
                     Tutup
                 </button>
             </div>
@@ -688,18 +704,14 @@
         </div>
     </div>
 
-    <!-- 3. JAVASCRIPT & FIREBASE LOGIC -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+    <!-- 3. JAVASCRIPT & FIREBASE CORE IMPLEMENTATION -->
+    <script>
         // ====================================================================
-        // 🟢 SINKRONISASI KREDENSIAL ASLI FIREBASE PROJECT ANDA (FOTO) 🟢
+        // 🔴 KONFIGURASI INTEGRASI FIREBASE & GOOGLE SCRIPT SINKRONISASI 🔴
         // ====================================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'logistore-gudang';
+        const appId = 'logistore-gudang';
         
         // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda
         const firebaseConfig = {
@@ -712,10 +724,10 @@
             appId: "1:193546714359:web:b3ccd1bfbc91046891a7f2"
         };
 
-        // 1. Inisialisasi Firebase & Firestore (RULE 3 - Auth First)
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Inisialisasi Firebase Compatibility SDK secara aman
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         let currentUser = null;
         let listPeserta = [];
@@ -726,60 +738,41 @@
         let currentScanMode = "checkIn";
         let firestoreUnsubscribe = null;
 
-        // Inisiasi Otorisasi Mandiri (RULE 3)
-        async function initAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Firebase Auth failed:", err);
-                showToast("Otorisasi Firebase Gagal. Menggunakan mode demonstrasi lokal.", "error");
-            }
-        }
+        // Login Otomatis secara Anonymously (RULE 3)
+        auth.signInAnonymously().catch(err => {
+            console.error("Firebase Auth trigger failed:", err);
+            showToast("Otorisasi Firebase gagal. Hubungkan credentials asli.", "error");
+        });
 
-        // Memantau status login Firebase (RULE 3)
-        onAuthStateChanged(auth, (user) => {
+        auth.onAuthStateChanged((user) => {
             currentUser = user;
             if (user) {
-                console.log("Firebase Connected. Authenticated UID:", user.uid);
+                console.log("Firebase Connected Real-time. UID:", user.uid);
                 startFirestoreRealtimeSync();
-            } else {
-                console.warn("Firebase Disconnected. Attempting Sign In...");
-                initAuth();
             }
         });
 
-        // 2. REAL-TIME INSTANT SYNC DARI FIREBASE (RULE 1 & RULE 2)
+        // Sync Data Firestore Real-time
         function startFirestoreRealtimeSync() {
-            if (!currentUser) return;
-            
+            if (!db) return;
             if (firestoreUnsubscribe) firestoreUnsubscribe();
 
-            // Sesuai RULE 1: Menggunakan strict path publik
-            const pCol = collection(db, 'artifacts', appId, 'public', 'data', 'participants');
-            
-            firestoreUnsubscribe = onSnapshot(pCol, (snapshot) => {
-                listPeserta = [];
-                snapshot.forEach((doc) => {
-                    listPeserta.push(doc.data());
-                });
-                
-                // Urutkan data berdasarkan ID secara alfabetis di memori JS (RULE 2 - No complex query)
-                listPeserta.sort((a, b) => a.id.localeCompare(b.id));
+            // Sesuai Path Database (default) Gratis
+            firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
+                .onSnapshot((snapshot) => {
+                    listPeserta = [];
+                    snapshot.forEach((doc) => {
+                        listPeserta.push(doc.data());
+                    });
+                    listPeserta.sort((a, b) => a.id.localeCompare(b.id));
 
-                renderPesertaTable(listPeserta);
-                calculateAndRenderStats(listPeserta);
-                console.log("Firestore Real-time Sync Succeeded. Records:", listPeserta.length);
-            }, (error) => {
-                console.error("Firestore Sync Error:", error);
-                showToast("Sinkronisasi real-time Firestore gagal. Periksa Security Rules!", "error");
-            });
+                    renderPesertaTable(listPeserta);
+                    calculateAndRenderStats(listPeserta);
+                }, (error) => {
+                    console.error("Firestore listen error:", error);
+                });
         }
 
-        // Kalkulasi Statistik Real-time dari Memori JS (RULE 2)
         function calculateAndRenderStats(data) {
             let totalPendaftar = 0;
             let totalHadir = 0;
@@ -787,28 +780,13 @@
             let totalPutih = 0;
             let hadirMerah = 0;
             let hadirPutih = 0;
-            let totalTidakHadir = 0;
             let l1 = 0, l2 = 0, l3 = 0;
 
-            let unitCounts = {};
-            let unitHadirCounts = {};
-
             data.forEach(p => {
-                if (p.status === "Tidak Hadir") {
-                    totalTidakHadir++;
-                    return;
-                }
+                if (p.status === "Tidak Hadir") return;
 
                 totalPendaftar++;
                 if (p.status === "Sudah Hadir") totalHadir++;
-
-                const unit = p.unit || "Umum";
-                if (!unitCounts[unit]) {
-                    unitCounts[unit] = 0;
-                    unitHadirCounts[unit] = 0;
-                }
-                unitCounts[unit]++;
-                if (p.status === "Sudah Hadir") unitHadirCounts[unit]++;
 
                 const timVal = p.tim ? p.tim.toLowerCase() : "";
                 if (timVal.includes("merah")) {
@@ -827,63 +805,40 @@
 
             const sisaKuponVal = Math.max(0, 320 - totalHadir);
 
-            const statPendaftar = document.getElementById('stat-pendaftar');
-            const statHadir = document.getElementById('stat-hadir');
-            const statKupon = document.getElementById('stat-kupon');
-            const statTimMerah = document.getElementById('stat-tim-merah');
-            const statTimPutih = document.getElementById('stat-tim-putih');
-            
-            if (statPendaftar) statPendaftar.innerText = totalPendaftar;
-            if (statHadir) statHadir.innerText = totalHadir;
-            if (statKupon) statKupon.innerText = sisaKuponVal;
+            document.getElementById('stat-pendaftar').innerText = totalPendaftar;
+            document.getElementById('stat-hadir').innerText = totalHadir;
+            document.getElementById('stat-kupon').innerText = sisaKuponVal;
 
-            if (statTimMerah) statTimMerah.innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
-            if (statTimPutih) statTimPutih.innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
+            document.getElementById('stat-tim-merah').innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
+            document.getElementById('stat-tim-putih').innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
 
-            const sl1 = document.getElementById('stat-lomba-1');
-            const sl2 = document.getElementById('stat-lomba-2');
-            const sl3 = document.getElementById('stat-lomba-3');
-
-            if (sl1) sl1.innerText = l1;
-            if (sl2) sl2.innerText = l2;
-            if (sl3) sl3.innerText = l3;
+            document.getElementById('stat-lomba-1').innerText = l1;
+            document.getElementById('stat-lomba-2').innerText = l2;
+            document.getElementById('stat-lomba-3').innerText = l3;
 
             const belumHadir = Math.max(0, totalPendaftar - totalHadir);
             updateAttendanceChart(totalHadir, belumHadir);
 
-            const rHadir = document.getElementById('chart-legend-hadir');
-            const rHadirPct = document.getElementById('chart-legend-hadir-pct');
-            const rBelum = document.getElementById('chart-legend-belum');
-            const rBelumPct = document.getElementById('chart-legend-belum-pct');
-            const rTotal = document.getElementById('chart-legend-total');
-            const rKupon = document.getElementById('chart-legend-kupon');
-
-            if (rHadir) rHadir.innerText = totalHadir;
-            if (rHadirPct) rHadirPct.innerText = totalPendaftar > 0 ? Math.round((totalHadir / totalPendaftar) * 100) + "%" : "0%";
-            if (rBelum) rBelum.innerText = belumHadir;
-            if (rBelumPct) rBelumPct.innerText = totalPendaftar > 0 ? Math.round((belumHadir / totalPendaftar) * 100) + "%" : "0%";
-            if (rTotal) rTotal.innerText = totalPendaftar + " Relawan";
-            if (rKupon) rKupon.innerText = sisaKuponVal + " Kupon";
+            document.getElementById('chart-legend-hadir').innerText = totalHadir;
+            document.getElementById('chart-legend-hadir-pct').innerText = totalPendaftar > 0 ? Math.round((totalHadir / totalPendaftar) * 100) + "%" : "0%";
+            document.getElementById('chart-legend-belum').innerText = belumHadir;
+            document.getElementById('chart-legend-belum-pct').innerText = totalPendaftar > 0 ? Math.round((belumHadir / totalPendaftar) * 100) + "%" : "0%";
+            document.getElementById('chart-legend-total').innerText = totalPendaftar + " Relawan";
+            document.getElementById('chart-legend-kupon').innerText = sisaKuponVal + " Kupon";
         }
 
-        // 3. PROSES SCAN KILAT DIRECT TO FIREBASE (REAL-TIME INSTANT)
+        // Proses Pemindaian Instan Firestore Kilat (<100ms)
         async function processRegistrationCode(idCode) {
-            if (!currentUser) {
-                showToast("Firebase belum terotorisasi. Gagal memproses.", "error");
-                return;
-            }
-            showOverlay(true, "Memproses Barcode...", "Koneksi Instan Firebase Cloud...");
+            showOverlay(true, "Memverifikasi Barcode...", "Koneksi Instan Firebase Cloud...");
             const normalizedCode = idCode.trim().toUpperCase();
+            const pDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(normalizedCode);
 
             try {
-                // Sesuai RULE 1: Mengambil dokumen dengan path ketat
-                const pDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'participants', normalizedCode);
-                const docSnap = await getDoc(pDocRef);
-
-                if (!docSnap.exists()) {
+                const docSnap = await pDocRef.get();
+                if (!docSnap.exists) {
                     showOverlay(false);
                     playSuccessSound(false);
-                    showToast("ID Registrasi tidak terdaftar di database Firebase!", "error");
+                    showToast("ID Registrasi tidak ditemukan di Firebase!", "error");
                     resetScanDisplayToStandby();
                     return;
                 }
@@ -892,7 +847,6 @@
                 const now = new Date();
                 const timestampNow = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + " WIB";
 
-                // MODE CHECK-IN PAGI
                 if (currentScanMode === "checkIn") {
                     if (pData.status === "Sudah Hadir") {
                         showOverlay(false);
@@ -901,36 +855,19 @@
                         return;
                     }
 
-                    if (pData.status === "Tidak Hadir") {
-                        showOverlay(false);
-                        playSuccessSound(false);
-                        showToast(`Relawan ${pData.nama} tercatat berhalangan hadir (Tidak Hadir).`, "error");
-                        resetScanDisplayToStandby();
-                        return;
-                    }
-
-                    const updatedData = {
-                        ...pData,
-                        status: "Sudah Hadir",
-                        waktuScan: timestampNow
-                    };
-                    await setDoc(pDocRef, updatedData);
-                    
+                    const updatedData = { ...pData, status: "Sudah Hadir", waktuScan: timestampNow };
+                    await pDocRef.set(updatedData);
                     showOverlay(false);
                     displayScanResult({ success: true, data: updatedData });
-
                     triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
-
                 } else {
-                    // MODE CHECK-OUT SORE
                     if (pData.status !== "Sudah Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        showToast(`Gagal! Relawan ${pData.nama} belum melakukan Check-In datang pagi.`, "error");
+                        showToast(`Gagal! Relawan ${pData.nama} belum melakukan Check-In pagi.`, "error");
                         resetScanDisplayToStandby();
                         return;
                     }
-
                     if (pData.statusPulang === "Selesai") {
                         showOverlay(false);
                         playSuccessSound(false);
@@ -938,92 +875,48 @@
                         return;
                     }
 
-                    const updatedData = {
-                        ...pData,
-                        statusPulang: "Selesai",
-                        waktuScanPulang: timestampNow
-                    };
-                    await setDoc(pDocRef, updatedData);
-
+                    const updatedData = { ...pData, statusPulang: "Selesai", waktuScanPulang: timestampNow };
+                    await pDocRef.set(updatedData);
                     showOverlay(false);
                     displayScanResult({ success: true, data: updatedData });
-
                     triggerAsynchronousSheetsSync(normalizedCode, "checkOut", timestampNow, updatedData);
                 }
-
-                // AUTO-RESTART SCANNER (5 DETIK)
-                const activePane = document.querySelector('.view-pane:not(.hidden)');
-                if (activePane && activePane.id === 'view-scan') {
-                    showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
-                    setTimeout(() => {
-                        const currentPane = document.querySelector('.view-pane:not(.hidden)');
-                        if (currentPane && currentPane.id === 'view-scan') {
-                            startScanner();
-                            showToast("Scanner aktif otomatis! Siap memindai.", "success");
-                        }
-                    }, 5000);
-                }
-
             } catch (err) {
                 showOverlay(false);
-                console.error("Firestore Transaction Failed:", err);
-                showToast("Koneksi Firebase gagal: " + err.message, "error");
+                showToast("Firebase Transaction Error: " + err.message, "error");
             }
         }
 
-        // 4. MIRRORING DATA KE GOOGLE SHEETS & EMAIL (BACKGROUND ASYNC)
-        async function triggerAsynchronousSheetsSync(idRegistrasi, mode, timestamp, fullData) {
+        // Sinkronisasi Latar Belakang & Kirim Email Bukti
+        function triggerAsynchronousSheetsSync(idRegistrasi, mode, timestamp, fullData) {
             const toggleWaEl = document.getElementById('toggle-wa');
-            const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
-            if (waEnabled) {
+            if (toggleWaEl && toggleWaEl.checked) {
                 sendEmailNotificationAPI(fullData);
             }
-
-            if (isGAS) {
-                try {
-                    fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "checkIn", idRegistrasi: idRegistrasi, mode: mode })
-                    }).then(r => r.json()).then(res => {
-                        console.log("Background Sheets Sync Success:", res);
-                    }).catch(e => {
-                        console.warn("Background Sheets Sync Delay (Will retry later):", e);
-                    });
-                } catch (e) {
-                    console.warn("Sync fetch error:", e);
-                }
+            if (API_URL) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "checkIn", idRegistrasi: idRegistrasi, mode: mode })
+                }).catch(e => console.warn("Background Sync Sheets delayed:", e));
             }
         }
 
-        // 5. SINKRON DATA MASAL GOOGLE SHEETS KE FIREBASE (SINKRONISASI BULK SEED)
+        // Bulk Seeding dari Google Sheets ke Firebase Cloud
         async function importSheetsToFirebase() {
-            if (!currentUser) {
-                showToast("Firebase belum siap.", "error");
-                return;
-            }
-            if (!confirm("Apakah Anda yakin ingin menyinkronkan & menarik seluruh data relawan dari Google Sheets ke Firebase Cloud? Data lama di Firebase dengan ID yang sama akan ditimpa.")) {
-                return;
-            }
-
-            showOverlay(true, "Mengambil Data Sheets...", "Menghubungkan ke API Google Sheets...");
-            
+            if (!confirm("Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud?")) return;
+            showOverlay(true, "Menghubungkan G-Sheets...", "Menarik data...");
             try {
-                const sheetsData = await fetchAPI("getParticipants");
-                if (!sheetsData || sheetsData.length === 0) {
-                    showOverlay(false);
-                    showToast("Tidak ada data relawan yang ditemukan di Google Sheets.", "error");
-                    return;
-                }
-
-                showOverlay(true, "Menulis ke Firebase...", `Menulis ${sheetsData.length} dokumen dalam batch...`);
-
-                const batch = writeBatch(db);
+                let url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
+                const response = await fetch(url, { redirect: 'follow' });
+                const sheetsData = await response.json();
                 
-                sheetsData.forEach((p) => {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participants', p.id.toString().toUpperCase());
-                    
-                    const firestoreDocData = {
+                showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
+                const batch = db.batch();
+                
+                sheetsData.forEach(p => {
+                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                    batch.set(docRef, {
                         id: p.id.toString().toUpperCase(),
                         nama: p.nama || "Tanpa Nama",
                         unit: p.unit || "Umum",
@@ -1034,131 +927,21 @@
                         status: p.status || "Belum Hadir",
                         statusPulang: p.statusPulang || "Belum Pulang",
                         waktuScanPulang: p.waktuScanPulang || "-"
-                    };
-                    batch.set(docRef, firestoreDocData);
+                    });
                 });
-
                 await batch.commit();
                 showOverlay(false);
-                showToast(`Sukses! ${sheetsData.length} data relawan dipindahkan ke Firebase Cloud.`, "success");
+                showToast(`Sukses memindahkan ${sheetsData.length} data ke Firebase Cloud!`, "success");
             } catch (err) {
                 showOverlay(false);
-                console.error("Bulk sync error:", err);
-                showToast("Gagal memindahkan data: " + err.message, "error");
+                showToast("Gagal Bulk Sync: " + err.message, "error");
             }
         }
 
         // ====================================================================
-        // UTILITY VISUAL & PENGOPERASIAN INTERAKTIF
+        // ESSENTIAL HELPER FUNCTIONS (RESTORED TO FIX INTERFACE FREEZE)
         // ====================================================================
 
-        window.switchView = switchView;
-        window.setScanMode = setScanMode;
-        window.toggleSidebar = toggleSidebar;
-        window.toggleMobileSidebar = toggleMobileSidebar;
-        window.importSheetsToFirebase = importSheetsToFirebase;
-        window.triggerSetupDatabase = triggerSetupDatabase;
-        window.onCameraChange = onCameraChange;
-        window.requestCameraPermission = requestCameraPermission;
-        window.startScanner = startScanner;
-        window.stopScanner = stopScanner;
-        window.manualSubmit = manualSubmit;
-        window.toggleCameraBlockedModal = toggleCameraBlockedModal;
-        window.clearWaLogs = clearWaLogs;
-        window.syncDatabase = () => {
-            showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
-            startFirestoreRealtimeSync();
-        };
-
-        // Real-time Clock
-        function startClock() {
-            const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-            
-            setInterval(() => {
-                const now = new Date();
-                const dayName = days[now.getDay()];
-                const date = now.getDate();
-                const monthName = months[now.getMonth()];
-                const year = now.getFullYear();
-                const hour = String(now.getHours()).padStart(2, '0');
-                const min = String(now.getMinutes()).padStart(2, '0');
-                const sec = String(now.getSeconds()).padStart(2, '0');
-                
-                const clockEl = document.getElementById('real-time-clock');
-                if (clockEl) {
-                    clockEl.innerHTML = `${dayName}, ${date} ${monthName} year • ${hour}:${min}:${sec} WIB`;
-                }
-            }, 1000);
-        }
-
-        // TOGGLE SIDEBAR DESKTOP & MOBILE
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (!sidebar) return;
-
-            if (window.innerWidth < 768) {
-                toggleMobileSidebar();
-            } else {
-                sidebar.classList.toggle('sidebar-collapsed');
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    sidebar.style.width = '80px';
-                } else {
-                    sidebar.style.width = '288px';
-                }
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 300);
-            }
-        }
-
-        // TOGGLE MOBILE SIDEBAR SLIDE OVERLAY
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const menu = document.getElementById('sidebar-menu');
-            
-            if (sidebar) {
-                sidebar.classList.toggle('-translate-x-full');
-            }
-            if (overlay) {
-                overlay.classList.toggle('hidden');
-            }
-            if (menu) {
-                menu.classList.remove('hidden');
-                menu.classList.add('flex');
-            }
-        }
-
-        // SAKELAR FILTER MODE JALUR REGISTRASI SORE/PAGI
-        function setScanMode(mode) {
-            currentScanMode = mode;
-            const checkInBtn = document.getElementById('mode-checkin-btn');
-            const checkOutBtn = document.getElementById('mode-checkout-btn');
-            
-            if (mode === "checkIn") {
-                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm";
-                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
-                showToast("Beralih ke Sesi Check-In Pagi (Kupon & Pita)", "warning");
-            } else {
-                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
-                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-indigo-950 text-white shadow-sm";
-                showToast("Beralih ke Sesi Check-Out Sore (Souvenir & Sertifikat)", "warning");
-            }
-            resetScanDisplayToStandby();
-        }
-
-        function resetScanDisplayToStandby() {
-            const standby = document.getElementById('result-standby');
-            const successCard = document.getElementById('result-success');
-            const warningCard = document.getElementById('result-warning');
-
-            if (standby) standby.classList.remove('hidden');
-            if (successCard) successCard.classList.add('hidden');
-            if (warningCard) warningCard.classList.add('hidden');
-        }
-
-        // Otomatisasi nyalakan kamera ketika masuk tab scan
         function switchView(targetViewId) {
             document.querySelectorAll('.view-pane').forEach(pane => pane.classList.add('hidden'));
             const targetPane = document.getElementById('view-' + targetViewId);
@@ -1195,453 +978,47 @@
             }
             
             if (window.innerWidth < 768) {
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                if (sidebar) sidebar.classList.add('-translate-x-full');
-                if (overlay) overlay.classList.add('hidden');
+                toggleMobileSidebar();
             }
         }
 
-        // TOGGLE MODAL PANDUAN ERROR API
-        function toggleApiErrorModal(show) {
-            const modal = document.getElementById('api-error-modal');
-            if (modal) {
-                if (show) {
-                    modal.classList.remove('hidden');
-                } else {
-                    modal.classList.add('hidden');
-                }
-            }
-        }
-
-        // Mengambil Data lewat REST API Vercel
-        async function syncDatabase(isBackground = false) {
-            const syncIcon = document.getElementById('sync-icon');
-            if (syncIcon) syncIcon.classList.add('fa-spin');
+        function setScanMode(mode) {
+            currentScanMode = mode;
+            const checkInBtn = document.getElementById('mode-checkin-btn');
+            const checkOutBtn = document.getElementById('mode-checkout-btn');
             
-            if (!isBackground) showOverlay(true, "Sedang Sinkronisasi...", "Mengambil data terbaru...");
-
-            if (isGAS) {
-                try {
-                    const data = await fetchAPI("getParticipants");
-                    listPeserta = data;
-                    renderPesertaTable(listPeserta);
-                    await fetchStats();
-                    if (!isBackground) showOverlay(false);
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                } catch (error) {
-                    console.error("syncDatabase error:", error);
-                    if (!isBackground) {
-                        showToast("Koneksi API gagal: " + error.message, "error");
-                        showOverlay(false);
-                        
-                        if (error.message.includes("Anyone") || error.message.includes("Login HTML") || error.message.includes("Proxy")) {
-                            toggleApiErrorModal(true);
-                        }
-                    }
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                }
+            if (mode === "checkIn") {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                showToast("Beralih ke Sesi Check-In Pagi (Kupon & Pita)", "warning");
             } else {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-indigo-950 text-white shadow-sm";
+                showToast("Beralih ke Sesi Check-Out Sore (Souvenir & Sertifikat)", "warning");
+            }
+            resetScanDisplayToStandby();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            if (window.innerWidth < 768) {
+                toggleMobileSidebar();
+            } else {
+                sidebar.classList.toggle('sidebar-collapsed');
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    sidebar.style.width = '80px';
+                } else {
+                    sidebar.style.width = '288px';
+                }
                 setTimeout(() => {
-                    listPeserta = []; 
-                    renderPesertaTable(listPeserta);
-                    if (!isBackground) showOverlay(false);
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                }, 800);
+                    window.dispatchEvent(new Event('resize'));
+                }, 300);
             }
         }
 
-        async function fetchStats() {
-            if (isGAS) {
-                try {
-                    const stats = await fetchAPI("getStats");
-                    updateDashboardStatsUI(stats);
-                } catch (err) {
-                    console.error("Gagal mengambil stats:", err);
-                }
-            }
-        }
-
-        // Merender Donut Chart dengan Chart.js
-        function updateAttendanceChart(hadir, belumHadir) {
-            const ctx = document.getElementById('attendanceChart');
-            if (!ctx) return;
-            
-            if (attendanceChartInstance) {
-                attendanceChartInstance.destroy();
-            }
-            
-            const total = hadir + belumHadir;
-            const percentage = total > 0 ? Math.round((hadir / total) * 100) : 0;
-            
-            attendanceChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Sudah Check-In', 'Belum Datang'],
-                    datasets: [{
-                        data: [hadir, belumHadir],
-                        backgroundColor: ['#10b981', '#f59e0b'],
-                        borderWidth: 3,
-                        borderColor: '#ffffff',
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return ` ${context.label}: ${value} relawan (${pct}%)`;
-                                }
-                            }
-                        }
-                    },
-                    cutout: '75%'
-                }
-            });
-            
-            const centerPct = document.getElementById('chart-center-pct');
-            if (centerPct) {
-                centerPct.innerText = percentage + "%";
-            }
-        }
-
-        // Dashboard UI Statistics & Custom Legends
-        function updateDashboardStatsUI(stats) {
-            const statPendaftar = document.getElementById('stat-pendaftar');
-            const statHadir = document.getElementById('stat-hadir');
-            const statKupon = document.getElementById('stat-kupon');
-            const statTimMerah = document.getElementById('stat-tim-merah');
-            const statTimPutih = document.getElementById('stat-tim-putih');
-            
-            if (statPendaftar) statPendaftar.innerText = stats.totalPendaftar;
-            if (statHadir) statHadir.innerText = stats.totalHadir;
-            if (statKupon) statKupon.innerText = stats.sisaKupon;
-
-            if (statTimMerah && stats.totalMerah !== undefined) {
-                statTimMerah.innerHTML = `${stats.totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirMerah || 0} hadir)</span>`;
-            }
-            if (statTimPutih && stats.totalPutih !== undefined) {
-                statTimPutih.innerHTML = `${stats.totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirPutih || 0} hadir)</span>`;
-            }
-
-            const sl1 = document.getElementById('stat-lomba-1');
-            const sl2 = document.getElementById('stat-lomba-2');
-            const sl3 = document.getElementById('stat-lomba-3');
-
-            if (stats.lomba1 !== undefined && sl1) sl1.innerText = stats.lomba1;
-            if (stats.lomba2 !== undefined && sl2) sl2.innerText = stats.lomba2;
-            if (stats.lomba3 !== undefined && sl3) sl3.innerText = stats.lomba3;
-
-            // KALKULASI DATA UNTUK DIAGRAM LINGKARAN
-            const hadir = Number(stats.totalHadir) || 0;
-            const total = Number(stats.totalPendaftar) || 0;
-            const belumHadir = Math.max(0, total - hadir);
-            const persentaseHadir = total > 0 ? Math.round((hadir / total) * 100) : 0;
-            const persentaseBelum = total > 0 ? Math.round((belumHadir / total) * 100) : 0;
-
-            const rHadir = document.getElementById('chart-legend-hadir');
-            const rHadirPct = document.getElementById('chart-legend-hadir-pct');
-            const rBelum = document.getElementById('chart-legend-belum');
-            const rBelumPct = document.getElementById('chart-legend-belum-pct');
-            const rTotal = document.getElementById('chart-legend-total');
-            const rKupon = document.getElementById('chart-legend-kupon');
-
-            if (rHadir) rHadir.innerText = hadir;
-            if (rHadirPct) rHadirPct.innerText = persentaseHadir + "% dari total";
-            if (rBelum) rBelum.innerText = belumHadir;
-            if (rBelumPct) rBelumPct.innerText = persentaseBelum + "% dari total";
-            
-            if (rTotal) rTotal.innerText = total + " Relawan";
-            if (rKupon) rKupon.innerText = stats.sisaKupon + " Kupon";
-
-            updateAttendanceChart(hadir, belumHadir);
-        }
-
-        // Render tabel pendaftar dengan penempatan Log Presensi dua baris yang premium
-        function renderPesertaTable(data) {
-            const tbody = document.getElementById('peserta-table-body');
-            if (!tbody) return;
-            
-            tbody.innerHTML = "";
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-slate-400">Memuat data pendaftar...</td></tr>`;
-                return;
-            }
-
-            data.forEach(p => {
-                let badgeClass = "bg-yellow-100 text-yellow-700";
-                if (p.status === "Sudah Hadir") {
-                    badgeClass = "bg-green-100 text-green-700";
-                } else if (p.status === "Tidak Hadir") {
-                    badgeClass = "bg-red-100 text-red-600";
-                }
-                
-                const lombaLabel = p.lomba && p.lomba !== "-" ? p.lomba : "<span class='text-slate-400 italic'>Tidak Ikut</span>";
-                
-                // STYLING BADGE TIM
-                const isTimMerah = p.tim && p.tim.toLowerCase().includes("merah");
-                const isTimPutih = p.tim && p.tim.toLowerCase().includes("putih");
-                const timBadgeClass = isTimMerah 
-                    ? "bg-red-100 text-red-700 border-red-200" 
-                    : (isTimPutih 
-                        ? "bg-blue-100 text-blue-700 border-blue-200" 
-                        : "bg-slate-100 text-slate-500 border-slate-200");
-
-                // PEMBUATAN FORMAT LOG PRESENSI DUA BARIS YANG ELEGAN
-                const datangText = p.waktuScan !== "-" 
-                    ? `<span class="text-emerald-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Datang: ${p.waktuScan}</span>` 
-                    : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Belum Datang</span>`;
-                
-                const pulangText = p.waktuScanPulang !== "-" 
-                    ? `<span class="text-indigo-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Pulang: ${p.waktuScanPulang}</span>` 
-                    : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Belum Pulang</span>`;
-                
-                const presensiLog = `<div class="flex flex-col text-xs gap-0.5">${datangText}${pulangText}</div>`;
-
-                const row = `
-                    <tr class="hover:bg-slate-50 border-b border-slate-200 transition-colors">
-                        <td class="p-4 font-bold text-slate-700 text-sm border-r border-slate-200">${p.id}</td>
-                        <td class="p-4 font-semibold text-slate-800 text-sm border-r border-slate-200">${p.nama}</td>
-                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.unit}</td>
-                        <td class="p-4 text-sm font-semibold text-slate-700 border-r border-slate-200">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs">
-                                <i class="fa-solid fa-trophy text-amber-500"></i> ${lombaLabel}
-                            </span>
-                        </td>
-                        <td class="p-4 text-sm font-bold border-r border-slate-200">
-                            <span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "-"}</span>
-                        </td>
-                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
-                        <td class="p-4 border-r border-slate-200">${presensiLog}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeClass}">${p.status}</span>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        }
-
-        // Penambahan filter berdasarkan Tim
-        function filterParticipantsTable() {
-            const queryEl = document.getElementById('search-peserta');
-            const filterTimEl = document.getElementById('filter-tim');
-            const filterLombaEl = document.getElementById('filter-lomba');
-            const filterStatusEl = document.getElementById('filter-status');
-            
-            if (!queryEl || !filterTimEl || !filterLombaEl || !filterStatusEl) return;
-            
-            const query = queryEl.value.toLowerCase();
-            const filterTim = filterTimEl.value;
-            const filterStatus = filterStatusEl.value;
-            const filterLomba = filterLombaEl.value;
-
-            const filtered = listPeserta.filter(p => {
-                const matchSearch = p.nama.toLowerCase().includes(query) || 
-                                    p.id.toLowerCase().includes(query) || 
-                                    p.unit.toLowerCase().includes(query);
-                
-                const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
-                const matchLomba = filterLomba === "Semua" || (p.lomba && p.lomba === filterLomba);
-                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim);
-                
-                return matchSearch && matchStatus && matchLomba && matchTim;
-            });
-
-            renderPesertaTable(filtered);
-        }
-
-        // ================= JAVASCRIPT SCANNER LOGIC =================
-        function loadCameraDevices() {
-            const select = document.getElementById('camera-select');
-            if (!select) return;
-            select.innerHTML = '<option value="">-- Mendeteksi Kamera Perangkat... --</option>';
-            
-            Html5Qrcode.getCameras().then(devices => {
-                select.innerHTML = "";
-                if (devices && devices.length > 0) {
-                    const hasLabels = devices.some(d => d.label);
-                    if (!hasLabels) {
-                        navigator.mediaDevices.getUserMedia({ video: true })
-                            .then(stream => {
-                                stream.getTracks().forEach(track => track.stop());
-                                Html5Qrcode.getCameras().then(newDevices => {
-                                    populateCameraSelect(newDevices);
-                                });
-                            })
-                            .catch(err => {
-                                populateCameraSelect(devices);
-                            });
-                    } else {
-                        populateCameraSelect(devices);
-                    }
-                } else {
-                    select.innerHTML = '<option value="">Kamera tidak terdeteksi. Gunakan input manual.</option>';
-                }
-            }).catch(err => {
-                console.warn("Gagal mendapatkan daftar kamera:", err);
-                select.innerHTML = '<option value="">Akses Kamera Dibatasi Browser</option>';
-            });
-        }
-
-        function populateCameraSelect(devices) {
-            const select = document.getElementById('camera-select');
-            if (!select) return;
-            select.innerHTML = "";
-            devices.forEach((device, index) => {
-                const opt = document.createElement('option');
-                opt.value = device.id;
-                opt.text = device.label || `Kamera ${index + 1}`;
-                
-                const labelLower = opt.text.toLowerCase();
-                if (labelLower.includes('back') || labelLower.includes('rear') || labelLower.includes('belakang') || labelLower.includes('environment')) {
-                    opt.selected = true;
-                } else if (labelLower.includes('logitech') || labelLower.includes('usb') || labelLower.includes('webcam')) {
-                    opt.selected = true;
-                }
-                select.appendChild(opt);
-            });
-        }
-
-        async function requestCameraPermission() {
-            showToast("Meminta izin akses kamera...", "warning");
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop());
-                showToast("Akses kamera berhasil diizinkan!", "success");
-                toggleCameraBlockedModal(false);
-                loadCameraDevices();
-            } catch (err) {
-                console.error("Gagal mendapatkan izin kamera:", err);
-                toggleCameraBlockedModal(true); 
-                if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError" || err.message.includes("device not found")) {
-                    showToast("Webcam tidak ditemukan! Pasangkan kamera eksternal Anda.", "error");
-                } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                    showToast("Izin kamera ditolak browser. Ikuti panduan layar!", "error");
-                } else {
-                    showToast("Kamera gagal diakses: " + err.message, "error");
-                }
-            }
-        }
-
-        async function onCameraChange() {
-            if (isScannerActive && html5QrCode) {
-                try {
-                    showToast("Mengalihkan kamera...", "warning");
-                    await html5QrCode.stop();
-                    isScannerActive = false;
-                    startScanner();
-                } catch (err) {
-                    console.error("Gagal stop saat ganti kamera:", err);
-                    isScannerActive = false;
-                    startScanner();
-                }
-            }
-        }
-
-        function startScanner() {
-            const select = document.getElementById('camera-select');
-            const selectedCameraId = select ? select.value : null;
-            const selectedText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
-
-            const camLoading = document.getElementById('camera-loading');
-            const scannerLine = document.getElementById('scanner-laser-line');
-            const btnStart = document.getElementById('btn-start-camera');
-            const btnStop = document.getElementById('btn-stop-camera');
-
-            if (camLoading) camLoading.classList.add('opacity-0');
-            setTimeout(() => {
-                if (camLoading) camLoading.classList.add('hidden');
-                if (scannerLine) scannerLine.classList.remove('hidden');
-            }, 300);
-
-            if (btnStart) btnStart.classList.add('hidden');
-            if (btnStop) btnStop.classList.remove('hidden');
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            
-            const config = { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false };
-            
-            let fallbackFacingMode = "user";
-            if (selectedText.includes("back") || selectedText.includes("rear") || selectedText.includes("belakang") || selectedText.includes("environment")) {
-                fallbackFacingMode = "environment";
-            }
-
-            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
-
-            html5QrCode.start(
-                targetCamera,
-                config,
-                onScanSuccess,
-                onScanFailure
-            ).then(() => {
-                isScannerActive = true;
-                toggleCameraBlockedModal(false);
-            }).catch(err => {
-                console.warn("Gagal memulai dengan kamera spesifik, mencoba arah fallback asli...", err);
-                toggleCameraBlockedModal(true);
-                html5QrCode.start(
-                    { facingMode: fallbackFacingMode },
-                    config,
-                    onScanSuccess,
-                    onScanFailure
-                ).then(() => {
-                    isScannerActive = true;
-                    toggleCameraBlockedModal(false);
-                }).catch(fallbackErr => {
-                    console.error("Camera fallback error:", fallbackErr);
-                    showToast("Kamera dibatasi! Buka panduan bantuan.", "error");
-                    stopScanner();
-                });
-            });
-        }
-
-        function stopScanner() {
-            const btnStart = document.getElementById('btn-start-camera');
-            const btnStop = document.getElementById('btn-stop-camera');
-            const camLoading = document.getElementById('camera-loading');
-            const scannerLine = document.getElementById('scanner-laser-line');
-
-            if (btnStart) btnStart.classList.remove('hidden');
-            if (btnStop) btnStop.classList.add('hidden');
-            if (camLoading) camLoading.classList.remove('hidden', 'opacity-0');
-            if (scannerLine) scannerLine.classList.add('hidden');
-
-            if (html5QrCode) {
-                if (isScannerActive) {
-                    html5QrCode.stop().then(() => {
-                        html5QrCode = null;
-                        isScannerActive = false;
-                    }).catch(err => {
-                        console.error("Error stopping scanner:", err);
-                        html5QrCode = null;
-                        isScannerActive = false;
-                    });
-                } else {
-                    html5QrCode = null;
-                }
-            }
-        }
-
-        function onScanSuccess(decodedText) {
-            processRegistrationCode(decodedText);
-            stopScanner();
-        }
-
-        function onScanFailure() {}
-
-        // Mengirimkan kode manual
+        // Restored manualSubmit function (FIXED - ADDED BACK)
         function manualSubmit() {
             const inputVal = document.getElementById('manual-input').value.trim();
             if (!inputVal) {
@@ -1653,7 +1030,295 @@
             if (mInput) mInput.value = "";
         }
 
-        // Penanganan tampilan hasil pemindaian di layar dengan proteksi crash ganda
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const menu = document.getElementById('sidebar-menu');
+            
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
+            if (overlay) overlay.classList.toggle('hidden');
+            if (menu) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            }
+        }
+
+        function triggerSetupDatabase() {
+            if (confirm("Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?")) {
+                showOverlay(true);
+                if (API_URL) {
+                    fetchAPI("setupDatabase")
+                        .then(result => {
+                            showOverlay(false);
+                            if (result && result.success) {
+                                showToast("Database Google Sheet berhasil diinisiasi!", "success");
+                                syncDatabase();
+                            } else {
+                                showToast("Gagal setup database.", "error");
+                            }
+                        })
+                        .catch(err => {
+                            showOverlay(false);
+                            showToast("Setup gagal: " + err.message, "error");
+                        });
+                }
+            }
+        }
+
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const tMsg = document.getElementById('toast-message');
+            
+            if (tMsg) tMsg.innerText = msg;
+            
+            if (toast && icon) {
+                if (type === "success") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-check text-lg";
+                } else if (type === "warning") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
+                } else {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-xmark text-lg";
+                }
+            }
+            setTimeout(() => { 
+                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
+            }, 4000);
+        }
+
+        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
+            const overlay = document.getElementById('loading-overlay');
+            const titleEl = document.getElementById('overlay-title');
+            const descEl = document.getElementById('overlay-desc');
+            
+            if (titleEl) titleEl.innerText = title;
+            if (descEl) descEl.innerText = desc;
+            
+            if (overlay) {
+                overlay.classList.toggle('hidden', !show);
+            }
+        }
+
+        function toggleCameraBlockedModal(show) {
+            const modal = document.getElementById('camera-blocked-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearWaLogs() {
+            if (confirm("Bersihkan semua log pengiriman Email pada sesi ini?")) {
+                const container = document.getElementById('wa-logs-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
+                            <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
+                            <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
+                        </div>
+                    `;
+                }
+                waLogs = [];
+                const wBadge = document.getElementById('wa-badge-count');
+                if (wBadge) {
+                    wBadge.innerText = "0";
+                }
+                showToast("Log berhasil dibersihkan.");
+            }
+        }
+
+        function resetScanDisplayToStandby() {
+            const standby = document.getElementById('result-standby');
+            const successCard = document.getElementById('result-success');
+            const warningCard = document.getElementById('result-warning');
+
+            if (standby) standby.classList.remove('hidden');
+            if (successCard) successCard.classList.add('hidden');
+            if (warningCard) warningCard.classList.add('hidden');
+        }
+
+        function checkAppEnv() {
+            const badge = document.getElementById('env-badge');
+            if (badge && API_URL) badge.innerHTML = '<i class="fa-solid fa-bolt"></i> <span>Firebase Real-time</span>';
+        }
+
+        async function fetchAPI(action, payload = null) {
+            let url = API_URL;
+            let options = { redirect: 'follow' };
+            if (payload) {
+                options.method = 'POST';
+                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+                options.body = JSON.stringify({ action: action, ...payload });
+            } else {
+                options.method = 'GET';
+                url += (url.includes('?') ? '&' : '?') + "action=" + action;
+            }
+            const response = await fetch(url, options);
+            return await response.json();
+        }
+
+        function renderPesertaTable(data) {
+            const tbody = document.getElementById('peserta-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = data.length === 0 ? `<tr><td colspan="8" class="text-center p-8 text-slate-400">Belum ada data di Firebase Cloud. Tekan "Sinkron Sheets ➔ Firebase" untuk mengisi data.</td></tr>` : "";
+            
+            data.forEach(p => {
+                let badgeClass = p.status === "Sudah Hadir" ? "bg-green-100 text-green-700" : (p.status === "Tidak Hadir" ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700");
+                const isMerah = p.tim && p.tim.toLowerCase().includes("merah");
+                const timBadgeClass = isMerah ? "bg-red-100 text-red-700 border-red-200" : "bg-blue-100 text-blue-700 border-blue-200";
+                const datangText = p.waktuScan !== "-" ? `<span class="text-emerald-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Datang: ${p.waktuScan}</span>` : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Belum Datang</span>`;
+                const pulangText = p.waktuScanPulang !== "-" ? `<span class="text-indigo-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Pulang: ${p.waktuScanPulang}</span>` : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Belum Pulang</span>`;
+                
+                const presensiLog = `<div class="flex flex-col text-xs gap-0.5">${datangText}${pulangText}</div>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200 transition-colors">
+                        <td class="p-4 font-bold text-slate-700 text-sm border-r border-slate-200">${p.id}</td>
+                        <td class="p-4 font-semibold text-slate-800 text-sm border-r border-slate-200">${p.nama}</td>
+                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.unit}</td>
+                        <td class="p-4 text-sm font-semibold text-slate-700 border-r border-slate-200"><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs"><i class="fa-solid fa-trophy text-amber-500"></i> ${p.lomba}</span></td>
+                        <td class="p-4 text-sm font-bold border-r border-slate-200"><span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim}</span></td>
+                        <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
+                        <td class="p-4 border-r border-slate-200">${presensiLog}</td>
+                        <td class="p-4 text-center"><span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeClass}">${p.status}</span></td>
+                    </tr>`;
+            });
+        }
+
+        function loadCameraDevices() {
+            const select = document.getElementById('camera-select');
+            if (!select) return;
+            Html5Qrcode.getCameras().then(devices => {
+                select.innerHTML = "";
+                devices.forEach((device, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.id; opt.text = device.label || `Kamera ${index + 1}`;
+                    if (opt.text.toLowerCase().includes('back') || opt.text.toLowerCase().includes('rear') || opt.text.toLowerCase().includes('usb')) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }).catch(e => select.innerHTML = '<option value="">Akses Kamera Dibatasi Browser</option>');
+        }
+
+        async function requestCameraPermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                toggleCameraBlockedModal(false); loadCameraDevices();
+                showToast("Akses kamera berhasil diizinkan!", "success");
+            } catch (err) { toggleCameraBlockedModal(true); }
+        }
+
+        async function onCameraChange() { if (isScannerActive && html5QrCode) { await html5QrCode.stop(); isScannerActive = false; startScanner(); } }
+
+        function startScanner() {
+            const select = document.getElementById('camera-select');
+            const selectedCameraId = select ? select.value : null;
+            document.getElementById('camera-loading').classList.add('hidden');
+            document.getElementById('scanner-laser-line').classList.remove('hidden');
+            document.getElementById('btn-start-camera').classList.add('hidden');
+            document.getElementById('btn-stop-camera').classList.remove('hidden');
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(selectedCameraId ? selectedCameraId : { facingMode: "environment" }, { fps: 30, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure)
+                .then(() => isScannerActive = true).catch(() => toggleCameraBlockedModal(true));
+        }
+
+        function stopScanner() {
+            document.getElementById('btn-start-camera').classList.remove('hidden');
+            document.getElementById('btn-stop-camera').classList.add('hidden');
+            document.getElementById('camera-loading').classList.remove('hidden');
+            document.getElementById('scanner-laser-line').classList.add('hidden');
+            if (html5QrCode && isScannerActive) { html5QrCode.stop().then(() => { html5QrCode = null; isScannerActive = false; }); }
+        }
+
+        function updateAttendanceChart(hadir, belumHadir) {
+            const ctx = document.getElementById('attendanceChart'); if (!ctx) return;
+            if (attendanceChartInstance) attendanceChartInstance.destroy();
+            attendanceChartInstance = new Chart(ctx, {
+                type: 'doughnut', data: { labels: ['Sudah Check-In', 'Belum Datang'], datasets: [{ data: [hadir, belumHadir], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
+            });
+            document.getElementById('chart-center-pct').innerText = (hadir + belumHadir) > 0 ? Math.round((hadir / (hadir + belumHadir)) * 100) + "%" : "0%";
+        }
+
+        // Restored scan success and failure functions
+        function onScanSuccess(decodedText) {
+            processRegistrationCode(decodedText);
+            stopScanner();
+        }
+
+        function onScanFailure() {}
+
+        // BINDING FUNCTIONS TO THE WINDOW SCOPE SO THE ONCLICK HANDLERS IN HTML DO NOT TRIGGER REFERENCEERROR
+        window.switchView = switchView;
+        window.setScanMode = setScanMode;
+        window.toggleSidebar = toggleSidebar;
+        window.toggleMobileSidebar = toggleMobileSidebar;
+        window.importSheetsToFirebase = importSheetsToFirebase;
+        window.triggerSetupDatabase = triggerSetupDatabase;
+        window.onCameraChange = onCameraChange;
+        window.requestCameraPermission = requestCameraPermission;
+        window.startScanner = startScanner;
+        window.stopScanner = stopScanner;
+        window.manualSubmit = manualSubmit;
+        window.toggleCameraBlockedModal = toggleCameraBlockedModal;
+        window.clearWaLogs = clearWaLogs;
+        window.syncDatabase = () => {
+            showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
+            startFirestoreRealtimeSync();
+        };
+
+        // Panggil REST API untuk kirim email
+        async function sendEmailNotificationAPI(participantData) {
+            try {
+                const res = await fetchAPI("sendEmail", { data: participantData });
+                addWaLogToUI(participantData, res.success, res.logMessage);
+            } catch(err) {
+                addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
+            }
+        }
+
+        function addWaLogToUI(data, isSent, messageText) {
+            const container = document.getElementById('wa-logs-container');
+            const emptyEl = document.getElementById('wa-log-empty');
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            
+            const badgeClass = isSent ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200";
+            const badgeText = isSent ? "<i class='fa-solid fa-check'></i> Sent" : "<i class='fa-solid fa-triangle-exclamation'></i> Failed";
+
+            const logItem = `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm transition-all hover:bg-slate-100">
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeClass}">${badgeText}</span>
+                            <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${timeStr} WIB</span>
+                            <span class="text-xs font-bold text-indigo-900">${data.nama} (${data.id})</span>
+                            <span class="text-xs text-slate-500">→ ${data.phone}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-150 font-mono">${messageText}</p>
+                    </div>
+                </div>
+            `;
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', logItem);
+            }
+            
+            waLogs.push(data);
+            const wBadge = document.getElementById('wa-badge-count');
+            if (wBadge) {
+                wBadge.innerText = waLogs.length;
+            }
+        }
+
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1761,172 +1426,32 @@
             }
         }
 
-        // Panggil REST API untuk kirim email
-        async function sendEmailNotificationAPI(participantData) {
-            try {
-                const res = await fetchAPI("sendEmail", { data: participantData });
-                addWaLogToUI(participantData, res.success, res.logMessage);
-            } catch(err) {
-                addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
-            }
-        }
-
-        function addWaLogToUI(data, isSent, messageText) {
-            const container = document.getElementById('wa-logs-container');
-            const emptyEl = document.getElementById('wa-log-empty');
-            if (emptyEl) emptyEl.classList.add('hidden');
-
-            const now = new Date();
-            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+        function filterParticipantsTable() {
+            const queryEl = document.getElementById('search-peserta');
+            const filterTimEl = document.getElementById('filter-tim');
+            const filterLombaEl = document.getElementById('filter-lomba');
+            const filterStatusEl = document.getElementById('filter-status');
             
-            const badgeClass = isSent ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200";
-            const badgeText = isSent ? "<i class='fa-solid fa-check'></i> Sent" : "<i class='fa-solid fa-triangle-exclamation'></i> Failed";
-
-            const logItem = `
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm transition-all hover:bg-slate-100">
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeClass}">${badgeText}</span>
-                            <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${timeStr} WIB</span>
-                            <span class="text-xs font-bold text-indigo-900">${data.nama} (${data.id})</span>
-                            <span class="text-xs text-slate-500">→ ${data.phone}</span>
-                        </div>
-                        <p class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-150 font-mono">${messageText}</p>
-                    </div>
-                </div>
-            `;
-            if (container) {
-                container.insertAdjacentHTML('afterbegin', logItem);
-            }
+            if (!queryEl || !filterTimEl || !filterLombaEl || !filterStatusEl) return;
             
-            waLogs.push(data);
-            const wBadge = document.getElementById('wa-badge-count');
-            if (wBadge) {
-                wBadge.innerText = waLogs.length;
-            }
-        }
+            const query = queryEl.value.toLowerCase();
+            const filterTim = filterTimEl.value;
+            const filterStatus = filterStatusEl.value;
+            const filterLomba = filterLombaEl.value;
 
-        function clearWaLogs() {
-            if (confirm("Bersihkan semua log pengiriman Email pada sesi ini?")) {
-                const container = document.getElementById('wa-logs-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
-                            <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
-                            <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
-                        </div>
-                    `;
-                }
-                waLogs = [];
-                const wBadge = document.getElementById('wa-badge-count');
-                if (wBadge) {
-                    wBadge.innerText = "0";
-                }
-                showToast("Log berhasil dibersihkan.");
-            }
-        }
-
-        function playSuccessSound() {
-            try {
-                let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                if (ctx.state === 'suspended') ctx.resume();
+            const filtered = listPeserta.filter(p => {
+                const matchSearch = p.nama.toLowerCase().includes(query) || 
+                                    p.id.toLowerCase().includes(query) || 
+                                    p.unit.toLowerCase().includes(query);
                 
-                let osc1 = ctx.createOscillator();
-                let gain1 = ctx.createGain();
-                osc1.type = "sine";
-                osc1.frequency.setValueAtTime(880, ctx.currentTime);
-                gain1.gain.setValueAtTime(0.08, ctx.currentTime);
-                gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-                osc1.connect(gain1); gain1.connect(ctx.destination);
-                osc1.start(); osc1.stop(ctx.currentTime + 0.1);
-
-                setTimeout(() => {
-                    let osc2 = ctx.createOscillator();
-                    let gain2 = ctx.createGain();
-                    osc2.type = "sine";
-                    osc2.frequency.setValueAtTime(1200, ctx.currentTime);
-                    gain2.gain.setValueAtTime(0.08, ctx.currentTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-                    osc2.connect(gain2); gain2.connect(ctx.destination);
-                    osc2.start(); osc2.stop(ctx.currentTime + 0.12);
-                }, 80);
-            } catch (e) {}
-        }
-
-        function playSuccessSoundFail() {
-            try {
-                let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                if (ctx.state === 'suspended') ctx.resume();
+                const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
+                const matchLomba = filterLomba === "Semua" || (p.lomba && p.lomba === filterLomba);
+                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim);
                 
-                let osc = ctx.createOscillator();
-                let gain = ctx.createGain();
-                osc.type = "sawtooth";
-                osc.frequency.setValueAtTime(140, ctx.currentTime);
-                gain.gain.setValueAtTime(0.12, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(); osc.stop(ctx.currentTime + 0.4);
-            } catch (e) {}
-        }
+                return matchSearch && matchStatus && matchLomba && matchTim;
+            });
 
-        window.playSuccessSoundReal = playSuccessSound;
-        window.playFailSoundReal = playSuccessSoundFail;
-        function playSuccessSound(isSuccess) { if (isSuccess) playSuccessSoundReal(); else playFailSoundReal(); }
-
-        async function triggerSetupDatabase() {
-            if (confirm("Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?")) {
-                showOverlay(true);
-                if (isGAS) {
-                    try {
-                        const result = await fetchAPI("setupDatabase");
-                        showOverlay(false);
-                        if(result.success) {
-                            showToast("Database Google Sheet berhasil diinisiasi!", "success");
-                            syncDatabase();
-                        }
-                    } catch(err) {
-                        showOverlay(false);
-                        showToast("Setup gagal: " + err.message, "error");
-                    }
-                }
-            }
-        }
-
-        function showToast(msg, type = "success") {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const tMsg = document.getElementById('toast-message');
-            
-            if (tMsg) tMsg.innerText = msg;
-            
-            if (toast && icon) {
-                if (type === "success") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-check text-lg";
-                } else if (type === "warning") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
-                } else {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-xmark text-lg";
-                }
-            }
-            setTimeout(() => { 
-                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
-            }, 4000);
-        }
-
-        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
-            const overlay = document.getElementById('loading-overlay');
-            const titleEl = document.getElementById('overlay-title');
-            const descEl = document.getElementById('overlay-desc');
-            
-            if (titleEl) titleEl.innerText = title;
-            if (descEl) descEl.innerText = desc;
-            
-            if (overlay) {
-                overlay.classList.toggle('hidden', !show);
-            }
+            renderPesertaTable(filtered);
         }
     </script>
 </body>
