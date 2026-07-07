@@ -119,6 +119,14 @@
             left: 50% !important;
             transform: translateX(-50%) !important;
         }
+
+        /* ── FIXED: MEMAKSA KAMERA MENGISI WADAH SECARA PROPORSIOAL (ANTI BLANK/BLACK BOX) ── */
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            border-radius: 0.75rem;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
@@ -391,13 +399,14 @@
                             </div>
                         </div>
 
-                        <div class="bg-slate-900 rounded-xl aspect-square relative flex items-center justify-center overflow-hidden border-4 border-slate-800">
-                            <div id="reader" class="w-full h-full"></div>
-                            <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity">
+                        <!-- ── FIXED CONTAINER: DIUBAH MENJADI MODEL ABSOLUTE INSET-0 BUKAN FLEX UNTUK MENJAMIN KAMERA MAKSIMAL ── -->
+                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full">
+                            <div id="reader" class="absolute inset-0 w-full h-full"></div>
+                            <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity z-10">
                                 <i class="fa-solid fa-camera-retro text-4xl text-blue-400 animate-bounce"></i>
                                 <span class="text-sm font-semibold">Silakan klik tombol <strong class="text-yellow-400">"Aktifkan Kamera"</strong> untuk memulai pemindaian.</span>
                             </div>
-                            <div id="scanner-laser-line" class="scanner-lasers hidden"></div>
+                            <div id="scanner-laser-line" class="scanner-lasers hidden z-20"></div>
                         </div>
                         
                         <div class="flex gap-2">
@@ -427,7 +436,6 @@
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
-                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -949,7 +957,7 @@
                 
                 await batch.commit();
                 showOverlay(false);
-                showToast(`Sukses menyinkronkan database! Sekarang Firebase memiliki ${sheetsData.length} data relawan.`, "success");
+                showToast("Sukses menyinkronkan database! Sekarang Firebase memiliki " + sheetsData.length + " data relawan.", "success");
             } catch (err) {
                 showOverlay(false);
                 showToast("Gagal Bulk Sync: " + err.message, "error");
@@ -1234,25 +1242,82 @@
 
         async function onCameraChange() { if (isScannerActive && html5QrCode) { await html5QrCode.stop(); isScannerActive = false; startScanner(); } }
 
+        // ── FIXED: DIUBAH PENGATURAN TRANSISI DAN FUNGSI DINAMIS UNTUK MENJAMIN KESUKSESAN ALIRAN STREAM KAMERA ──
         function startScanner() {
             const select = document.getElementById('camera-select');
             const selectedCameraId = select ? select.value : null;
-            document.getElementById('camera-loading').classList.add('hidden');
-            document.getElementById('scanner-laser-line').classList.remove('hidden');
-            document.getElementById('btn-start-camera').classList.add('hidden');
-            document.getElementById('btn-stop-camera').classList.remove('hidden');
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            const selectText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
             
-            html5QrCode.start(selectedCameraId ? selectedCameraId : { facingMode: "environment" }, { fps: 30, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure)
-                .then(() => isScannerActive = true).catch(() => toggleCameraBlockedModal(true));
+            const camLoading = document.getElementById('camera-loading');
+            const scannerLine = document.getElementById('scanner-laser-line');
+            const btnStart = document.getElementById('btn-start-camera');
+            const btnStop = document.getElementById('btn-stop-camera');
+
+            if (btnStart) btnStart.classList.add('hidden');
+            if (btnStop) btnStop.classList.remove('hidden');
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            // Hitung ukuran qrbox secara dinamis berbasis persentase resolusi asli HP/Laptop (Anti-Collapse)
+            const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+                let minEdgePercentage = 0.7; // 70% dari resolusi
+                let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+                return {
+                    width: qrboxSize,
+                    height: qrboxSize
+                };
+            };
+            
+            const config = { 
+                fps: 30, 
+                qrbox: qrboxFunction,
+                disableFlip: false 
+            };
+
+            let fallbackFacingMode = "user";
+            if (selectText.includes("back") || selectText.includes("rear") || selectText.includes("belakang") || selectText.includes("environment")) {
+                fallbackFacingMode = "environment";
+            }
+
+            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
+
+            html5QrCode.start(
+                targetCamera, 
+                config, 
+                onScanSuccess, 
+                onScanFailure
+            ).then(() => {
+                isScannerActive = true;
+                toggleCameraBlockedModal(false);
+                
+                // FIXED TRANSITION: Sembunyikan loading spinner HANYA saat video stream sudah terhubung (Failsafe)
+                if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
+                if (scannerLine) scannerLine.classList.remove('hidden');
+            }).catch(err => {
+                console.error("Camera startup error:", err);
+                toggleCameraBlockedModal(true);
+                stopScanner();
+            });
         }
 
         function stopScanner() {
             document.getElementById('btn-start-camera').classList.remove('hidden');
             document.getElementById('btn-stop-camera').classList.add('hidden');
-            document.getElementById('camera-loading').classList.remove('hidden');
+            document.getElementById('camera-loading').classList.remove('opacity-0', 'hidden');
             document.getElementById('scanner-laser-line').classList.add('hidden');
-            if (html5QrCode && isScannerActive) { html5QrCode.stop().then(() => { html5QrCode = null; isScannerActive = false; }); }
+            if (html5QrCode && isScannerActive) { 
+                html5QrCode.stop().then(() => { 
+                    html5QrCode = null; 
+                    isScannerActive = false; 
+                }).catch(err => {
+                    console.error("Error stopping camera stream:", err);
+                    html5QrCode = null;
+                    isScannerActive = false;
+                }); 
+            }
         }
 
         function updateAttendanceChart(hadir, belumHadir) {
@@ -1271,7 +1336,6 @@
             stopScanner();
         }
 
-        // ADDED TO RESOLVE REFERENCERROR (FIXED)
         function onScanFailure(error) {
             // Meredam log warning berkala dari pembacaan kamera agar konsol tidak banjir log
         }
