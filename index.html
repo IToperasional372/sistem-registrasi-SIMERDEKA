@@ -120,7 +120,7 @@
             transform: translateX(-50%) !important;
         }
 
-        /* ── FIXED: MEMAKSA KAMERA MENGISI WADAH SECARA PROPORSIOAL (ANTI BLANK/BLACK BOX) ── */
+        /* Memaksa video kamera mengisi seluruh wadah secara proporsional */
         #reader video {
             width: 100% !important;
             height: 100% !important;
@@ -399,8 +399,8 @@
                             </div>
                         </div>
 
-                        <!-- ── FIXED CONTAINER: DIUBAH MENJADI MODEL ABSOLUTE INSET-0 BUKAN FLEX UNTUK MENJAMIN KAMERA MAKSIMAL ── -->
-                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full">
+                        <!-- ── FIXED CONTAINER ── -->
+                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full font-mono">
                             <div id="reader" class="absolute inset-0 w-full h-full"></div>
                             <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity z-10">
                                 <i class="fa-solid fa-camera-retro text-4xl text-blue-400 animate-bounce"></i>
@@ -750,7 +750,7 @@
         // Login Otomatis secara Anonymously (RULE 3)
         auth.signInAnonymously().catch(err => {
             console.error("Firebase Auth trigger failed:", err);
-            showToast("Otorisasi Firebase gagal. Hubungkan credentials asli.", "error");
+            showToast("Otorisasi Firebase Gagal. Menggunakan mode demonstrasi lokal.", "error");
         });
 
         auth.onAuthStateChanged((user) => {
@@ -812,7 +812,7 @@
                 if (lombaVal.includes("tambang")) l3++;
             });
 
-            // UPDATE: Default kupon diubah menjadi 500 hibrida
+            // Default kupon diubah menjadi 500 hibrida
             const sisaKuponVal = Math.max(0, 500 - totalHadir);
 
             document.getElementById('stat-pendaftar').innerText = totalPendaftar;
@@ -865,19 +865,29 @@
                         return;
                     }
 
+                    if (pData.status === "Tidak Hadir") {
+                        showOverlay(false);
+                        playSuccessSound(false);
+                        showToast(`Relawan ${pData.nama} tercatat berhalangan hadir (Tidak Hadir).`, "error");
+                        resetScanDisplayToStandby();
+                        return;
+                    }
+
                     const updatedData = { ...pData, status: "Sudah Hadir", waktuScan: timestampNow };
                     await pDocRef.set(updatedData);
                     showOverlay(false);
                     displayScanResult({ success: true, data: updatedData });
                     triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
                 } else {
+                    // MODE CHECK-OUT SORE
                     if (pData.status !== "Sudah Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        showToast(`Gagal! Relawan ${pData.nama} belum melakukan Check-In pagi.`, "error");
+                        showToast(`Gagal! Relawan ${pData.nama} belum melakukan Check-In datang pagi.`, "error");
                         resetScanDisplayToStandby();
                         return;
                     }
+
                     if (pData.statusPulang === "Selesai") {
                         showOverlay(false);
                         playSuccessSound(false);
@@ -913,7 +923,7 @@
         }
 
         // Bulk Seeding dari Google Sheets ke Firebase Cloud
-        // UPDATE: Membersihkan data lama di Firebase agar sinkronisasi baris yang dihapus di Sheets terhapus total (NEW)
+        // Membersihkan data lama di Firebase agar sinkronisasi baris yang dihapus di Sheets terhapus total
         async function importSheetsToFirebase() {
             if (!currentUser) {
                 showToast("Firebase belum siap.", "error");
@@ -932,7 +942,7 @@
                 showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
                 const batch = db.batch();
                 
-                // Langkah Penghapusan: Hapus semua entri lama yang ada di memori listPeserta agar sinkron total (NEW)
+                // Langkah Penghapusan: Hapus semua entri lama yang ada di memori listPeserta agar sinkron total
                 listPeserta.forEach(p => {
                     const oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
                     batch.delete(oldDocRef);
@@ -1044,18 +1054,6 @@
             }
         }
 
-        // Restored manualSubmit function (FIXED - ADDED BACK)
-        function manualSubmit() {
-            const inputVal = document.getElementById('manual-input').value.trim();
-            if (!inputVal) {
-                showToast("ID Registrasi kosong!", "error");
-                return;
-            }
-            processRegistrationCode(inputVal);
-            const mInput = document.getElementById('manual-input');
-            if (mInput) mInput.value = "";
-        }
-
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -1164,7 +1162,7 @@
             const successCard = document.getElementById('result-success');
             const warningCard = document.getElementById('result-warning');
 
-            if (standby) standby.classList.add('hidden');
+            if (standby) standby.classList.remove('hidden');
             if (successCard) successCard.classList.add('hidden');
             if (warningCard) warningCard.classList.add('hidden');
         }
@@ -1197,7 +1195,8 @@
             data.forEach(p => {
                 let badgeClass = p.status === "Sudah Hadir" ? "bg-green-100 text-green-700" : (p.status === "Tidak Hadir" ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700");
                 const isMerah = p.tim && p.tim.toLowerCase().includes("merah");
-                const timBadgeClass = isMerah ? "bg-red-100 text-red-700 border-red-200" : "bg-blue-100 text-blue-700 border-blue-200";
+                const isPutih = p.tim && p.tim.toLowerCase().includes("putih");
+                const timBadgeClass = isMerah ? "bg-red-100 text-red-700 border-red-200" : (isPutih ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-500 border-slate-200");
                 const datangText = p.waktuScan !== "-" ? `<span class="text-emerald-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Datang: ${p.waktuScan}</span>` : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-sun mr-1"></i> Belum Datang</span>`;
                 const pulangText = p.waktuScanPulang !== "-" ? `<span class="text-indigo-600 font-bold block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Pulang: ${p.waktuScanPulang}</span>` : `<span class="text-slate-400 block whitespace-nowrap"><i class="fa-regular fa-moon mr-1"></i> Belum Pulang</span>`;
                 
@@ -1222,13 +1221,45 @@
             if (!select) return;
             Html5Qrcode.getCameras().then(devices => {
                 select.innerHTML = "";
-                devices.forEach((device, index) => {
-                    const opt = document.createElement('option');
-                    opt.value = device.id; opt.text = device.label || `Kamera ${index + 1}`;
-                    if (opt.text.toLowerCase().includes('back') || opt.text.toLowerCase().includes('rear') || opt.text.toLowerCase().includes('usb')) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            }).catch(e => select.innerHTML = '<option value="">Akses Kamera Dibatasi Browser</option>');
+                if (devices && devices.length > 0) {
+                    const hasLabels = devices.some(d => d.label);
+                    if (!hasLabels) {
+                        navigator.mediaDevices.getUserMedia({ video: true })
+                            .then(stream => {
+                                stream.getTracks().forEach(track => track.stop());
+                                Html5Qrcode.getCameras().then(newDevices => {
+                                    populateCameraSelect(newDevices);
+                                });
+                            })
+                            .catch(err => {
+                                populateCameraSelect(devices);
+                            });
+                    } else {
+                        populateCameraSelect(devices);
+                    }
+                } else {
+                    select.innerHTML = '<option value="">Kamera tidak terdeteksi. Gunakan input manual.</option>';
+                }
+            }).catch(e => {
+                console.warn("Gagal mendapatkan daftar kamera:", e);
+                select.innerHTML = '<option value="">Akses Kamera Dibatasi Browser</option>';
+            });
+        }
+
+        function populateCameraSelect(devices) {
+            const select = document.getElementById('camera-select');
+            if (!select) return;
+            select.innerHTML = "";
+            devices.forEach((device, index) => {
+                const opt = document.createElement('option');
+                opt.value = device.id; opt.text = device.label || `Kamera ${index + 1}`;
+                if (opt.text.toLowerCase().includes('back') || opt.text.toLowerCase().includes('rear') || opt.text.toLowerCase().includes('belakang') || opt.text.toLowerCase().includes('environment')) {
+                    opt.selected = true;
+                } else if (opt.text.toLowerCase().includes('logitech') || opt.text.toLowerCase().includes('usb') || opt.text.toLowerCase().includes('webcam')) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
         }
 
         async function requestCameraPermission() {
@@ -1242,10 +1273,10 @@
 
         async function onCameraChange() { if (isScannerActive && html5QrCode) { await html5QrCode.stop(); isScannerActive = false; startScanner(); } }
 
-        // ── FIXED: DIUBAH PENGATURAN TRANSISI DAN FUNGSI DINAMIS UNTUK MENJAMIN KESUKSESAN ALIRAN STREAM KAMERA ──
+        // ── FIXED: DIUBAH PENGATURAN TRANSISI DAN SINKRONISASI RANTAI CADANGAN KAMERA OTOMATIS (FAILSAFE KILAT) ──
         function startScanner() {
             const select = document.getElementById('camera-select');
-            const selectedCameraId = select ? select.value : null;
+            const selectedCameraId = select && select.value !== "" ? select.value : null;
             const selectText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
             
             const camLoading = document.getElementById('camera-loading');
@@ -1284,23 +1315,38 @@
 
             const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
 
-            html5QrCode.start(
-                targetCamera, 
-                config, 
-                onScanSuccess, 
-                onScanFailure
-            ).then(() => {
-                isScannerActive = true;
-                toggleCameraBlockedModal(false);
-                
-                // FIXED TRANSITION: Sembunyikan loading spinner HANYA saat video stream sudah terhubung (Failsafe)
-                if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
-                if (scannerLine) scannerLine.classList.remove('hidden');
-            }).catch(err => {
-                console.error("Camera startup error:", err);
-                toggleCameraBlockedModal(true);
-                stopScanner();
-            });
+            // ── FIXED: SISTEM PENYELAMATAN RANTAI CADANGAN KAMERA BERTAHAP (ANTI-CRASH) ──
+            const tryStart = (cameraSource, attemptNum = 1) => {
+                html5QrCode.start(
+                    cameraSource, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                ).then(() => {
+                    isScannerActive = true;
+                    toggleCameraBlockedModal(false);
+                    if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
+                    if (scannerLine) scannerLine.classList.remove('hidden');
+                }).catch(err => {
+                    console.warn(`Upaya pemuatan kamera ke-${attemptNum} gagal:`, err);
+                    if (attemptNum === 1) {
+                        // Upaya 2: Fallback ke kamera belakang secara otomatis
+                        tryStart({ facingMode: "environment" }, 2);
+                    } else if (attemptNum === 2) {
+                        // Upaya 3: Fallback ke kamera depan secara otomatis
+                        tryStart({ facingMode: "user" }, 3);
+                    } else if (attemptNum === 3) {
+                        // Upaya 4: Fallback ke setelan default browser (kosongkan constraint)
+                        tryStart({}, 4);
+                    } else {
+                        console.error("Seluruh rantai cadangan kamera gagal diinisiasi:", err);
+                        toggleCameraBlockedModal(true);
+                        stopScanner();
+                    }
+                });
+            };
+
+            tryStart(targetCamera, 1);
         }
 
         function stopScanner() {
@@ -1336,6 +1382,50 @@
             stopScanner();
         }
 
+        // Sound Feedback Controller (Fallback to Web Audio API Synthesizer)
+        function playSuccessSound(isSuccess) {
+            if (isSuccess === undefined || isSuccess === true) {
+                try {
+                    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    let osc1 = ctx.createOscillator();
+                    let gain1 = ctx.createGain();
+                    osc1.type = "sine";
+                    osc1.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                    osc1.connect(gain1); gain1.connect(ctx.destination);
+                    osc1.start(); osc1.stop(ctx.currentTime + 0.1);
+
+                    setTimeout(() => {
+                        let osc2 = ctx.createOscillator();
+                        let gain2 = ctx.createGain();
+                        osc2.type = "sine";
+                        osc2.frequency.setValueAtTime(1200, ctx.currentTime);
+                        gain2.gain.setValueAtTime(0.08, ctx.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                        osc2.connect(gain2); gain2.connect(ctx.destination);
+                        osc2.start(); osc2.stop(ctx.currentTime + 0.12);
+                    }, 80);
+                } catch (e) {}
+            } else {
+                try {
+                    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = "sawtooth";
+                    osc.frequency.setValueAtTime(140, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.4);
+                } catch (e) {}
+            }
+        }
+
         function onScanFailure(error) {
             // Meredam log warning berkala dari pembacaan kamera agar konsol tidak banjir log
         }
@@ -1355,7 +1445,11 @@
         window.toggleCameraBlockedModal = toggleCameraBlockedModal;
         window.clearWaLogs = clearWaLogs;
         window.onScanSuccess = onScanSuccess;
-        window.onScanFailure = onScanFailure; // BIND GLOBALLY TO PREVENT REFERENCEERROR (FIXED)
+        window.onScanFailure = onScanFailure; 
+        window.playSuccessSound = playSuccessSound;
+        window.playSuccesSound = playSuccessSound; // Typo alias failsafe! (FIXED)
+        window.playSuccessSoundReal = () => playSuccessSound(true);
+        window.playFailSoundReal = () => playSuccessSound(false);
         window.syncDatabase = () => {
             showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
             startFirestoreRealtimeSync();
@@ -1406,140 +1500,16 @@
             }
         }
 
-        function displayScanResult(result) {
-            const standby = document.getElementById('result-standby');
-            const successCard = document.getElementById('result-success');
-            const warningCard = document.getElementById('result-warning');
-
-            if (standby) standby.classList.add('hidden');
-            if (successCard) successCard.classList.add('hidden');
-            if (warningCard) warningCard.classList.add('hidden');
-
-            if (!result) {
-                showToast("Gagal memproses respons server.", "error");
-                if (standby) standby.classList.remove('hidden');
+        // Restored manualSubmit function (FIXED - ADDED BACK)
+        function manualSubmit() {
+            const inputVal = document.getElementById('manual-input').value.trim();
+            if (!inputVal) {
+                showToast("ID Registrasi kosong!", "error");
                 return;
             }
-
-            if (result.success) {
-                playSuccessSound(true);
-                
-                const rId = document.getElementById('res-id');
-                const rNama = document.getElementById('res-nama');
-                const rUnit = document.getElementById('res-unit');
-                const rPhone = document.getElementById('res-phone');
-                const rWaktu = document.getElementById('res-waktu');
-                const rTim = document.getElementById('res-tim'); 
-                const rPitaColor = document.getElementById('res-pita-color'); 
-                
-                if (rId) rId.innerText = result.data.id;
-                if (rNama) rNama.innerText = result.data.nama;
-                if (rUnit) rUnit.innerText = "Unit " + result.data.unit;
-                if (rPhone) rPhone.innerText = result.data.phone;
-                
-                if (rTim) {
-                    rTim.innerText = result.data.tim;
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
-                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
-                }
-
-                if (rPitaColor) {
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
-                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
-                }
-                
-                const resSuccessMsg = document.getElementById('res-success-msg');
-                const badgeTitle = successCard.querySelector('span');
-                
-                if (currentScanMode === "checkIn") {
-                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-check mr-1"></i> BERHASIL DIREGISTRASI`;
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
-                    if (isMerah || isPutih) {
-                        let warnaPita = isMerah ? "Merah" : "Putih";
-                        let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
-                    } else {
-                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
-                    }
-                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-In: ${result.data.waktuScan}`;
-                    showToast("Selamat registrasi check-in berhasil!", "success");
-                } else {
-                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
-                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
-                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang || result.data.waktuScan}`;
-                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
-                }
-                
-                const resKategori = document.getElementById('res-kategori');
-                if (resKategori) {
-                    resKategori.innerText = result.data.kategori || "-";
-                }
-                
-                if (successCard) successCard.classList.remove('hidden');
-                triggerAsynchronousSheetsSync(result.data.id, currentScanMode, result.data.waktuScan || result.data.waktuScanPulang, result.data);
-            } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
-                playSuccessSound(false);
-                
-                const rwId = document.getElementById('res-warn-id');
-                const rwNama = document.getElementById('res-warn-nama');
-                const rwUnit = document.getElementById('res-warn-unit');
-                const rwWaktu = document.getElementById('res-warn-waktu');
-                const wMsg = document.getElementById('warn-message');
-                const warnBadgeTitle = warningCard.querySelector('span');
-                
-                if (rwId) rwId.innerText = result.data.id;
-                if (rwNama) rwNama.innerText = result.data.nama;
-                if (rwUnit) rwUnit.innerText = "Unit " + result.data.unit;
-                
-                if (result.alreadyCheckedIn) {
-                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-1"></i> RE-ENTRY TERDETEKSI`;
-                    if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
-                } else {
-                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> SOUVENIR SUDAH DIAMBIL`;
-                    if (rwWaktu) rwWaktu.innerText = "Selesai: " + (result.data.waktuScanPulang || "-");
-                }
-                
-                if (wMsg) wMsg.innerText = result.message;
-                
-                if (warningCard) warningCard.className = "bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in";
-                if (warningCard) warningCard.classList.remove('hidden');
-                showToast(result.message, "warning");
-            } else {
-                playSuccessSound(false);
-                showToast(result.message, "error");
-                if (standby) standby.classList.remove('hidden');
-            }
-        }
-
-        function filterParticipantsTable() {
-            const queryEl = document.getElementById('search-peserta');
-            const filterTimEl = document.getElementById('filter-tim');
-            const filterLombaEl = document.getElementById('filter-lomba');
-            const filterStatusEl = document.getElementById('filter-status');
-            
-            if (!queryEl || !filterTimEl || !filterLombaEl || !filterStatusEl) return;
-            
-            const query = queryEl.value.toLowerCase();
-            const filterTim = filterTimEl.value;
-            const filterStatus = filterStatusEl.value;
-            const filterLomba = filterLombaEl.value;
-
-            const filtered = listPeserta.filter(p => {
-                const matchSearch = p.nama.toLowerCase().includes(query) || 
-                                    p.id.toLowerCase().includes(query) || 
-                                    p.unit.toLowerCase().includes(query);
-                
-                const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
-                const matchLomba = filterLomba === "Semua" || (p.lomba && p.lomba === filterLomba);
-                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim);
-                
-                return matchSearch && matchStatus && matchLomba && matchTim;
-            });
-
-            renderPesertaTable(filtered);
+            processRegistrationCode(inputVal);
+            const mInput = document.getElementById('manual-input');
+            if (mInput) mInput.value = "";
         }
     </script>
 </body>
