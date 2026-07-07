@@ -722,7 +722,7 @@
 
         const appId = 'logistore-gudang';
         
-        // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda
+        // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda (Foto)
         const firebaseConfig = {
             apiKey: "AIzaSyC2P8_jIiN59mSHbWhcQpG-sBRO56gNXtA",
             authDomain: "logistore-gudang.firebaseapp.com",
@@ -733,11 +733,7 @@
             appId: "1:193546714359:web:b3ccd1bfbc91046891a7f2"
         };
 
-        // Inisialisasi Firebase Compatibility SDK secara aman
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
+        // Deklarasi global scope variable
         let currentUser = null;
         let listPeserta = [];
         let waLogs = [];
@@ -747,39 +743,54 @@
         let currentScanMode = "checkIn";
         let firestoreUnsubscribe = null;
 
-        // Login Otomatis secara Anonymously (RULE 3)
-        auth.signInAnonymously().catch(err => {
-            console.error("Firebase Auth trigger failed:", err);
-            showToast("Otorisasi Firebase Gagal. Menggunakan mode demonstrasi lokal.", "error");
-        });
+        // ── FIXED: ISOLASI EROR FIREBASE PADA INSTANSI AWAL (TRY-CATCH SAFEGUARD) ──
+        try {
+            firebase.initializeApp(firebaseConfig);
+            window.auth = firebase.auth();
+            window.db = firebase.firestore();
 
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            if (user) {
-                console.log("Firebase Connected Real-time. UID:", user.uid);
-                startFirestoreRealtimeSync();
-            }
-        });
+            // Login Otomatis secara Anonymously (RULE 3)
+            auth.signInAnonymously().catch(err => {
+                console.error("Firebase Auth trigger failed:", err);
+                showToast("Otorisasi Firebase gagal. Menggunakan mode cadangan Google Sheets.", "error");
+            });
+
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                if (user) {
+                    console.log("Firebase Connected Real-time. UID:", user.uid);
+                    startFirestoreRealtimeSync();
+                }
+            });
+        } catch (e) {
+            console.error("Firebase Gagal diinisialisasi. Aplikasi beralih otomatis ke cadangan Google Sheets:", e);
+            window.auth = null;
+            window.db = null;
+        }
 
         // Sync Data Firestore Real-time
         function startFirestoreRealtimeSync() {
             if (!db) return;
             if (firestoreUnsubscribe) firestoreUnsubscribe();
 
-            // Sesuai Path Database (default) Gratis
-            firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
-                .onSnapshot((snapshot) => {
-                    listPeserta = [];
-                    snapshot.forEach((doc) => {
-                        listPeserta.push(doc.data());
-                    });
-                    listPeserta.sort((a, b) => a.id.localeCompare(b.id));
+            try {
+                // Sesuai Path Database (default) Gratis
+                firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
+                    .onSnapshot((snapshot) => {
+                        listPeserta = [];
+                        snapshot.forEach((doc) => {
+                            listPeserta.push(doc.data());
+                        });
+                        listPeserta.sort((a, b) => a.id.localeCompare(b.id));
 
-                    renderPesertaTable(listPeserta);
-                    calculateAndRenderStats(listPeserta);
-                }, (error) => {
-                    console.error("Firestore listen error:", error);
-                });
+                        renderPesertaTable(listPeserta);
+                        calculateAndRenderStats(listPeserta);
+                    }, (error) => {
+                        console.error("Firestore listen error:", error);
+                    });
+            } catch (err) {
+                console.error("Failed to start Firestore real-time sync:", err);
+            }
         }
 
         function calculateAndRenderStats(data) {
@@ -839,9 +850,19 @@
 
         // Proses Pemindaian Instan Firestore Kilat (<100ms)
         async function processRegistrationCode(idCode) {
-            showOverlay(true, "Memverifikasi Barcode...", "Koneksi Instan Firebase Cloud...");
             const normalizedCode = idCode.trim().toUpperCase();
+
+            // ── FIXED: OTOMATIS BERALIH KE CADANGAN SHEETS JIKA FIREBASE PROYEK BELUM SIAP (ANTI-CRASH) ──
+            if (!db || !currentUser) {
+                console.warn("Firebase belum terotorisasi atau tidak aktif. Menghubungkan lewat mode cadangan Google Sheets...");
+                processRegistrationCodeViaSheetsOnly(normalizedCode);
+                return;
+            }
+
+            showOverlay(true, "Memverifikasi Barcode...", "Koneksi Instan Firebase Cloud...");
             const pDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(normalizedCode);
+            const toggleWaEl = document.getElementById('toggle-wa');
+            const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
 
             try {
                 const docSnap = await pDocRef.get();
@@ -877,6 +898,11 @@
                     await pDocRef.set(updatedData);
                     showOverlay(false);
                     displayScanResult({ success: true, data: updatedData });
+                    
+                    if (waEnabled) {
+                        updatedData.scanMode = currentScanMode;
+                        sendEmailNotificationAPI(updatedData);
+                    }
                     triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
                 } else {
                     // MODE CHECK-OUT SORE
@@ -887,7 +913,6 @@
                         resetScanDisplayToStandby();
                         return;
                     }
-
                     if (pData.statusPulang === "Selesai") {
                         showOverlay(false);
                         playSuccessSound(false);
@@ -899,6 +924,11 @@
                     await pDocRef.set(updatedData);
                     showOverlay(false);
                     displayScanResult({ success: true, data: updatedData });
+                    
+                    if (waEnabled) {
+                        updatedData.scanMode = currentScanMode;
+                        sendEmailNotificationAPI(updatedData);
+                    }
                     triggerAsynchronousSheetsSync(normalizedCode, "checkOut", timestampNow, updatedData);
                 }
             } catch (err) {
@@ -907,12 +937,40 @@
             }
         }
 
+        // ── FIXED: SISTEM PENYELAMATAN CADANGAN GOOGLE SHEETS JIKA FIREBASE PROYEK OFF (ANTI-MOGOK) ──
+        async function processRegistrationCodeViaSheetsOnly(normalizedCode) {
+            showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server Sheets...");
+            const toggleWaEl = document.getElementById('toggle-wa');
+            const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
+            try {
+                const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
+                showOverlay(false);
+                displayScanResult(result);
+                if (result.success && waEnabled) {
+                    result.data.scanMode = currentScanMode;
+                    sendEmailNotificationAPI(result.data);
+                }
+                
+                // SISTEM COOLDOWN & AUTO-RESTART KAMERA (5 DETIK)
+                const activePane = document.querySelector('.view-pane:not(.hidden)');
+                if (activePane && activePane.id === 'view-scan') {
+                    showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
+                    setTimeout(() => {
+                        const currentPane = document.querySelector('.view-pane:not(.hidden)');
+                        if (currentPane && currentPane.id === 'view-scan') {
+                            startScanner();
+                            showToast("Scanner aktif otomatis! Siap memindai.", "success");
+                        }
+                    }, 5000);
+                }
+            } catch (err) {
+                showOverlay(false);
+                showToast("Koneksi API Gagal: " + err.message, "error");
+            }
+        }
+
         // Sinkronisasi Latar Belakang & Kirim Email Bukti
         function triggerAsynchronousSheetsSync(idRegistrasi, mode, timestamp, fullData) {
-            const toggleWaEl = document.getElementById('toggle-wa');
-            if (toggleWaEl && toggleWaEl.checked) {
-                sendEmailNotificationAPI(fullData);
-            }
             if (API_URL) {
                 fetch(API_URL, {
                     method: 'POST',
@@ -1500,6 +1558,141 @@
             }
         }
 
+        function displayScanResult(result) {
+            const standby = document.getElementById('result-standby');
+            const successCard = document.getElementById('result-success');
+            const warningCard = document.getElementById('result-warning');
+
+            if (standby) standby.classList.add('hidden');
+            if (successCard) successCard.classList.add('hidden');
+            if (warningCard) warningCard.classList.add('hidden');
+
+            if (!result) {
+                showToast("Gagal memproses respons server.", "error");
+                if (standby) standby.classList.remove('hidden');
+                return;
+            }
+
+            if (result.success) {
+                playSuccessSound(true);
+                
+                const rId = document.getElementById('res-id');
+                const rNama = document.getElementById('res-nama');
+                const rUnit = document.getElementById('res-unit');
+                const rPhone = document.getElementById('res-phone');
+                const rWaktu = document.getElementById('res-waktu');
+                const rTim = document.getElementById('res-tim'); 
+                const rPitaColor = document.getElementById('res-pita-color'); 
+                
+                if (rId) rId.innerText = result.data.id;
+                if (rNama) rNama.innerText = result.data.nama;
+                if (rUnit) rUnit.innerText = "Unit " + result.data.unit;
+                if (rPhone) rPhone.innerText = result.data.phone;
+                
+                if (rTim) {
+                    rTim.innerText = result.data.tim;
+                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
+                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
+                    rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
+                }
+
+                if (rPitaColor) {
+                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
+                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
+                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
+                }
+                
+                const resSuccessMsg = document.getElementById('res-success-msg');
+                const badgeTitle = successCard.querySelector('span');
+                
+                if (currentScanMode === "checkIn") {
+                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-check mr-1"></i> BERHASIL DIREGISTRASI`;
+                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
+                    const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
+                    if (isMerah || isPutih) {
+                        let warnaPita = isMerah ? "Merah" : "Putih";
+                        let warnaClass = isMerah ? "text-red-600" : "text-blue-600";
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah, snack, serta pita <span class='font-bold ${warnaClass}'>${warnaPita}</span> sesuai tim"`;
+                    } else {
+                        resSuccessMsg.innerHTML = `"Silakan tunjukkan pesan ini ke panitia untuk mengambil kupon hadiah dan snack"`;
+                    }
+                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-In: ${result.data.waktuScan}`;
+                    showToast("Selamat registrasi check-in berhasil!", "success");
+                } else {
+                    if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
+                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
+                    if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang || result.data.waktuScan}`;
+                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
+                }
+                
+                const resKategori = document.getElementById('res-kategori');
+                if (resKategori) {
+                    resKategori.innerText = result.data.kategori || "-";
+                }
+                
+                if (successCard) successCard.classList.remove('hidden');
+            } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
+                playSuccessSound(false);
+                
+                const rwId = document.getElementById('res-warn-id');
+                const rwNama = document.getElementById('res-warn-nama');
+                const rwUnit = document.getElementById('res-warn-unit');
+                const rwWaktu = document.getElementById('res-warn-waktu');
+                const wMsg = document.getElementById('warn-message');
+                const warnBadgeTitle = warningCard.querySelector('span');
+                
+                if (rwId) rwId.innerText = result.data.id;
+                if (rwNama) rwNama.innerText = result.data.nama;
+                if (rwUnit) rwUnit.innerText = "Unit " + result.data.unit;
+                
+                if (result.alreadyCheckedIn) {
+                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-1"></i> RE-ENTRY TERDETEKSI`;
+                    if (rwWaktu) rwWaktu.innerText = result.data.waktuScan;
+                } else {
+                    if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> SOUVENIR SUDAH DIAMBIL`;
+                    if (rwWaktu) rwWaktu.innerText = "Selesai: " + (result.data.waktuScanPulang || "-");
+                }
+                
+                if (wMsg) wMsg.innerText = result.message;
+                
+                if (warningCard) warningCard.className = "bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in";
+                if (warningCard) warningCard.classList.remove('hidden');
+                showToast(result.message, "warning");
+            } else {
+                playSuccessSound(false);
+                showToast(result.message, "error");
+                if (standby) standby.classList.remove('hidden');
+            }
+        }
+
+        function filterParticipantsTable() {
+            const queryEl = document.getElementById('search-peserta');
+            const filterTimEl = document.getElementById('filter-tim');
+            const filterLombaEl = document.getElementById('filter-lomba');
+            const filterStatusEl = document.getElementById('filter-status');
+            
+            if (!queryEl || !filterTimEl || !filterLombaEl || !filterStatusEl) return;
+            
+            const query = queryEl.value.toLowerCase();
+            const filterTim = filterTimEl.value;
+            const filterStatus = filterStatusEl.value;
+            const filterLomba = filterLombaEl.value;
+
+            const filtered = listPeserta.filter(p => {
+                const matchSearch = p.nama.toLowerCase().includes(query) || 
+                                    p.id.toLowerCase().includes(query) || 
+                                    p.unit.toLowerCase().includes(query);
+                
+                const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
+                const matchLomba = filterLomba === "Semua" || (p.lomba && p.lomba === filterLomba);
+                const matchTim = filterTim === "Semua" || (p.tim && p.tim === filterTim);
+                
+                return matchSearch && matchStatus && matchLomba && matchTim;
+            });
+
+            renderPesertaTable(filtered);
+        }
+
         // Restored manualSubmit function (FIXED - ADDED BACK)
         function manualSubmit() {
             const inputVal = document.getElementById('manual-input').value.trim();
@@ -1511,6 +1704,11 @@
             const mInput = document.getElementById('manual-input');
             if (mInput) mInput.value = "";
         }
+
+        // BINDING EXTRA FUNCTIONS TO WINDOW SCOPE AS SAFEGUARD
+        window.displayScanResult = displayScanResult;
+        window.filterParticipantsTable = filterParticipantsTable;
+        window.manualSubmit = manualSubmit;
     </script>
 </body>
 </html>
