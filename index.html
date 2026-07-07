@@ -803,7 +803,8 @@
                 if (lombaVal.includes("tambang")) l3++;
             });
 
-            const sisaKuponVal = Math.max(0, 320 - totalHadir);
+            // UPDATE: Default kupon diubah menjadi 500 hibrida
+            const sisaKuponVal = Math.max(0, 500 - totalHadir);
 
             document.getElementById('stat-pendaftar').innerText = totalPendaftar;
             document.getElementById('stat-hadir').innerText = totalHadir;
@@ -903,8 +904,16 @@
         }
 
         // Bulk Seeding dari Google Sheets ke Firebase Cloud
+        // UPDATE: Membersihkan data lama di Firebase agar sinkronisasi baris yang dihapus di Sheets terhapus total (NEW)
         async function importSheetsToFirebase() {
-            if (!confirm("Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud?")) return;
+            if (!currentUser) {
+                showToast("Firebase belum siap.", "error");
+                return;
+            }
+            if (!confirm("Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud? Data lama di Firebase yang tidak ada di Google Sheets akan ikut terhapus untuk menyamakan database.")) {
+                return;
+            }
+
             showOverlay(true, "Menghubungkan G-Sheets...", "Menarik data...");
             try {
                 let url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
@@ -914,6 +923,13 @@
                 showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
                 const batch = db.batch();
                 
+                // Langkah Penghapusan: Hapus semua entri lama yang ada di memori listPeserta agar sinkron total (NEW)
+                listPeserta.forEach(p => {
+                    const oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                    batch.delete(oldDocRef);
+                });
+                
+                // Langkah Penulisan: Tambahkan entri baru dari Sheets
                 sheetsData.forEach(p => {
                     const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
                     batch.set(docRef, {
@@ -929,9 +945,10 @@
                         waktuScanPulang: p.waktuScanPulang || "-"
                     });
                 });
+                
                 await batch.commit();
                 showOverlay(false);
-                showToast(`Sukses memindahkan ${sheetsData.length} data ke Firebase Cloud!`, "success");
+                showToast(`Sukses menyinkronkan database! Sekarang Firebase memiliki ${sheetsData.length} data relawan.`, "success");
             } catch (err) {
                 showOverlay(false);
                 showToast("Gagal Bulk Sync: " + err.message, "error");
@@ -1138,7 +1155,7 @@
             const successCard = document.getElementById('result-success');
             const warningCard = document.getElementById('result-warning');
 
-            if (standby) standby.classList.remove('hidden');
+            if (standby) standby.classList.add('hidden');
             if (successCard) successCard.classList.add('hidden');
             if (warningCard) warningCard.classList.add('hidden');
         }
@@ -1253,9 +1270,7 @@
             stopScanner();
         }
 
-        function onScanFailure() {}
-
-        // BINDING FUNCTIONS TO THE WINDOW SCOPE SO THE ONCLICK HANDLERS IN HTML DO NOT TRIGGER REFERENCEERROR
+        // BINDING FUNCTIONS TO THE WINDOW SCOPE
         window.switchView = switchView;
         window.setScanMode = setScanMode;
         window.toggleSidebar = toggleSidebar;
@@ -1392,6 +1407,7 @@
                 }
                 
                 if (successCard) successCard.classList.remove('hidden');
+                triggerAsynchronousSheetsSync(result.data.id, currentScanMode, result.data.waktuScan || result.data.waktuScanPulang, result.data);
             } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
                 playSuccessSound(false);
                 
