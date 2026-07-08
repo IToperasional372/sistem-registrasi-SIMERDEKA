@@ -322,7 +322,7 @@
                                     </div>
                                     <div class="flex justify-between">
                                         <span>Sisa Kupon & Hadiah:</span>
-                                        <span id="chart-legend-kupon" class="text-slate-800 font-bold">0 Kupon</span>
+                                        <span id="chart-legend-total-kupon" class="text-slate-800 font-bold">0 Kupon</span>
                                     </div>
                                 </div>
                             </div>
@@ -399,7 +399,7 @@
                             </div>
                         </div>
 
-                        <!-- ── FIXED CONTAINER ── -->
+                        <!-- CONTAINER KAMERA -->
                         <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full">
                             <div id="reader" class="absolute inset-0 w-full h-full"></div>
                             <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity z-10">
@@ -468,7 +468,7 @@
                                     </div>
                                     <div>
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Asal Unit biMBA</p>
-                                        <strong id="res-unit" class="text-slate-700">Memuat...</strong>
+                                        <strong id="res-unit" class="text-slate-700 font-semibold">Memuat...</strong>
                                     </div>
                                     <div>
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
@@ -486,6 +486,7 @@
                             </div>
                         </div>
 
+                        <!-- Warning/Already Checked In Card -->
                         <div id="result-warning" class="hidden bg-white border border-amber-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-4xl">
@@ -506,7 +507,7 @@
                                 <div class="grid grid-cols-2 gap-y-4 gap-x-6">
                                     <div>
                                         <p class="text-xs text-slate-500 font-semibold mb-1">ID Pendaftaran</p>
-                                        <strong id="res-warn-id" class="text-lg text-amber-700">-</strong>
+                                        <strong id="res-warn-id" class="text-lg text-amber-700 font-mono">-</strong>
                                     </div>
                                     <div>
                                         <p class="text-xs text-slate-500 font-semibold mb-1">Nama Lengkap</p>
@@ -571,7 +572,7 @@
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Lokasi Kantor/Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Tim</th>
+                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Log Presensi (Datang / Pulang)</th>
                                     <th class="p-4 text-xs font-bold uppercase text-center">Status</th>
@@ -714,17 +715,29 @@
         </div>
     </div>
 
-    <!-- 3. JAVASCRIPT & FIREBASE CORE IMPLEMENTATION -->
-    <script>
-        // ====================================================================
-        // 🔴 KONFIGURASI INTEGRASI FIREBASE & GOOGLE SCRIPT SINKRONISASI 🔴
-        // ====================================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
+    <!-- CUSTOM CONFIRMATION MODAL (REPLACES NATIVE BROWSER CONFIRM) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[120] flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <h3 id="confirm-modal-title" class="font-poppins font-bold text-lg text-slate-800 mb-2">Konfirmasi Tindakan</h3>
+            <p id="confirm-modal-desc" class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+            <div class="flex justify-end gap-2">
+                <button id="btn-confirm-cancel" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Batal</button>
+                <button id="btn-confirm-yes" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
 
-        const appId = 'logistore-gudang';
+    <!-- 3. JAVASCRIPT CORE IMPLEMENTATION -->
+    <script>
+        // Set all vital scoping variables
+        var API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
         
-        // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda
-        const firebaseConfig = {
+        // ── DIUBAH: INTEGRASI FIREBASE MULTI-ENVIRONMENT (FAILSAFE CANVAS & PROD) ──
+        // Menggunakan Variabel Lingkungan Canvas jika tersedia, atau mengembalikan ke kredensial asli project Anda saat di-deploy
+        var appId = typeof __app_id !== 'undefined' ? __app_id : 'logistore-gudang';
+        var isGAS = API_URL !== "" && API_URL.startsWith("http");
+        
+        var firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyC2P8_jIiN59mSHbWhcQpG-sBRO56gNXtA",
             authDomain: "logistore-gudang.firebaseapp.com",
             databaseURL: "https://logistore-gudang-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -734,17 +747,56 @@
             appId: "1:193546714359:web:b3ccd1bfbc91046891a7f2"
         };
 
-        // Deklarasi global scope variable agar selalu terdefinisi sejak awal (Anti-ReferenceError)
-        window.currentUser = null;
-        window.listPeserta = [];
-        window.waLogs = [];
-        window.html5QrCode = null;
-        window.attendanceChartInstance = null;
-        window.isScannerActive = false;
-        window.currentScanMode = "checkIn";
-        window.firestoreUnsubscribe = null;
+        var auth = null;
+        var db = null;
+        var currentUser = null;
+        var listPeserta = [];
+        var waLogs = [];
+        var html5QrCode = null;
+        var attendanceChartInstance = null;
+        var isScannerActive = false;
+        var currentScanMode = "checkIn";
+        var firestoreUnsubscribe = null;
 
-        // Mendefinisikan semua fungsi di awal agar ter-compile secara global
+        // ── RESTORED UI CONTROLLERS ──
+        
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const tMsg = document.getElementById('toast-message');
+            
+            if (tMsg) tMsg.innerText = msg;
+            
+            if (toast && icon) {
+                if (type === "success") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-check text-lg";
+                } else if (type === "warning") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
+                } else {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-xmark text-lg";
+                }
+            }
+            setTimeout(() => { 
+                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
+            }, 4000);
+        }
+
+        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
+            const overlay = document.getElementById('loading-overlay');
+            const titleEl = document.getElementById('overlay-title');
+            const descEl = document.getElementById('overlay-desc');
+            
+            if (titleEl) titleEl.innerText = title;
+            if (descEl) descEl.innerText = desc;
+            
+            if (overlay) {
+                overlay.classList.toggle('hidden', !show);
+            }
+        }
+
         function switchView(targetViewId) {
             document.querySelectorAll('.view-pane').forEach(pane => pane.classList.add('hidden'));
             const targetPane = document.getElementById('view-' + targetViewId);
@@ -770,7 +822,7 @@
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.innerText = titles[targetViewId] || "Registrasi";
             
-            if (targetViewId !== 'scan' && window.isScannerActive) {
+            if (targetViewId !== 'scan' && isScannerActive) {
                 stopScanner();
             } else if (targetViewId === 'scan') {
                 loadCameraDevices();
@@ -786,7 +838,7 @@
         }
 
         function setScanMode(mode) {
-            window.currentScanMode = mode;
+            currentScanMode = mode;
             const checkInBtn = document.getElementById('mode-checkin-btn');
             const checkOutBtn = document.getElementById('mode-checkout-btn');
             
@@ -834,6 +886,17 @@
             }
         }
 
+        function toggleCameraBlockedModal(show) {
+            const modal = document.getElementById('camera-blocked-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        }
+
         function manualSubmit() {
             const inputVal = document.getElementById('manual-input').value.trim();
             if (!inputVal) {
@@ -846,138 +909,126 @@
         }
 
         function triggerSetupDatabase() {
-            if (confirm("Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?")) {
-                showOverlay(true);
-                if (API_URL) {
-                    fetchAPI("setupDatabase")
-                        .then(result => {
-                            showOverlay(false);
-                            if (result && result.success) {
-                                showToast("Database Google Sheet berhasil diinisiasi!", "success");
-                                syncDatabase();
-                            } else {
-                                showToast("Gagal setup database.", "error");
-                            }
-                        })
-                        .catch(err => {
-                            showOverlay(false);
-                            showToast("Setup gagal: " + err.message, "error");
-                        });
+            showCustomConfirm(
+                "Inisialisasi Database",
+                "Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?",
+                function() {
+                    showOverlay(true);
+                    if (API_URL) {
+                        fetchAPI("setupDatabase")
+                            .then(result => {
+                                showOverlay(false);
+                                if (result && result.success) {
+                                    showToast("Database Google Sheet berhasil diinisiasi!", "success");
+                                    syncDatabase();
+                                } else {
+                                    showToast("Gagal setup database.", "error");
+                                }
+                            })
+                            .catch(err => {
+                                showOverlay(false);
+                                showToast("Setup gagal: " + err.message, "error");
+                            });
+                    }
                 }
-            }
-        }
-
-        function showToast(msg, type = "success") {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const tMsg = document.getElementById('toast-message');
-            
-            if (tMsg) tMsg.innerText = msg;
-            
-            if (toast && icon) {
-                if (type === "success") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-check text-lg";
-                } else if (type === "warning") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
-                } else {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-xmark text-lg";
-                }
-            }
-            setTimeout(() => { 
-                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
-            }, 4000);
-        }
-
-        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
-            const overlay = document.getElementById('loading-overlay');
-            const titleEl = document.getElementById('overlay-title');
-            const descEl = document.getElementById('overlay-desc');
-            
-            if (titleEl) titleEl.innerText = title;
-            if (descEl) descEl.innerText = desc;
-            
-            if (overlay) {
-                overlay.classList.toggle('hidden', !show);
-            }
-        }
-
-        function toggleCameraBlockedModal(show) {
-            const modal = document.getElementById('camera-blocked-modal');
-            if (modal) {
-                if (show) {
-                    modal.classList.remove('hidden');
-                } else {
-                    modal.classList.add('hidden');
-                }
-            }
+            );
         }
 
         function clearWaLogs() {
-            if (confirm("Bersihkan semua log pengiriman Email pada sesi ini?")) {
-                const container = document.getElementById('wa-logs-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
-                            <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
-                            <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
-                        </div>
-                    `;
+            showCustomConfirm(
+                "Bersihkan Log",
+                "Bersihkan semua log pengiriman Email pada sesi ini?",
+                function() {
+                    const container = document.getElementById('wa-logs-container');
+                    if (container) {
+                        container.innerHTML = `
+                            <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
+                                <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
+                                <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
+                            </div>
+                        `;
+                    }
+                    window.waLogs = [];
+                    const wBadge = document.getElementById('wa-badge-count');
+                    if (wBadge) {
+                        wBadge.innerText = "0";
+                    }
+                    showToast("Log berhasil dibersihkan.");
                 }
-                window.waLogs = [];
-                const wBadge = document.getElementById('wa-badge-count');
-                if (wBadge) {
-                    wBadge.innerText = "0";
+            );
+        }
+
+        // Custom Confirm Modal Handler
+        function showCustomConfirm(title, desc, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const descEl = document.getElementById('confirm-modal-desc');
+            const btnCancel = document.getElementById('btn-confirm-cancel');
+            const btnYes = document.getElementById('btn-confirm-yes');
+
+            if (titleEl) titleEl.innerText = title;
+            if (descEl) descEl.innerText = desc;
+
+            if (modal) modal.classList.remove('hidden');
+
+            btnCancel.onclick = function() {
+                if (modal) modal.classList.add('hidden');
+            };
+
+            btnYes.onclick = function() {
+                if (modal) modal.classList.add('hidden');
+                onConfirm();
+            };
+        }
+
+        // ── DIUBAH: MEKANISME OTENTIKASI & SYNC KEAMANAN FAILSAFE (RULE 3) ──
+        async function initFirebaseAndAuth() {
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error("SDK Firebase tidak terdeteksi.");
                 }
-                showToast("Log berhasil dibersihkan.");
+                
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                // Selalu panggil otentikasi di awal dan await (RULE 3)
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await auth.signInAnonymously();
+                }
+
+                auth.onAuthStateChanged((user) => {
+                    currentUser = user;
+                    if (user) {
+                        console.log("Firebase Connected Real-time. UID:", user.uid);
+                        startFirestoreRealtimeSync();
+                    } else {
+                        if (firestoreUnsubscribe) {
+                            firestoreUnsubscribe();
+                            firestoreUnsubscribe = null;
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Firebase Gagal diinisialisasi. Aplikasi beralih otomatis ke cadangan Google Sheets:", e);
+                auth = null;
+                db = null;
+                showToast("Firebase Offline: Menghubungkan lewat Google Sheets API.", "warning");
             }
         }
 
-        function resetScanDisplayToStandby() {
-            const standby = document.getElementById('result-standby');
-            const successCard = document.getElementById('result-success');
-            const warningCard = document.getElementById('result-warning');
-
-            if (standby) standby.classList.remove('hidden');
-            if (successCard) successCard.classList.add('hidden');
-            if (warningCard) warningCard.classList.add('hidden');
-        }
-
-        // ISOLASI KONEKSI FIREBASE SECARA AMAN (PREVENT BLACK SCREEN/FREEZE)
-        try {
-            firebase.initializeApp(firebaseConfig);
-            window.auth = firebase.auth();
-            window.db = firebase.firestore();
-
-            auth.signInAnonymously().catch(err => {
-                console.error("Firebase Auth trigger failed:", err);
-                showToast("Otorisasi Firebase gagal. Menggunakan mode cadangan Google Sheets.", "error");
-            });
-
-            auth.onAuthStateChanged((user) => {
-                window.currentUser = user;
-                if (user) {
-                    console.log("Firebase Connected Real-time. UID:", user.uid);
-                    startFirestoreRealtimeSync();
-                }
-            });
-        } catch (e) {
-            console.error("Firebase Gagal diinisialisasi. Aplikasi beralih otomatis ke cadangan Google Sheets:", e);
-            window.auth = null;
-            window.db = null;
-        }
-
-        // Sync Data Firestore Real-time
         function startFirestoreRealtimeSync() {
-            if (!db) return;
+            // Guard: Cegah query sebelum user ter-autentikasi (RULE 3)
+            if (!db || !currentUser) return;
             if (firestoreUnsubscribe) firestoreUnsubscribe();
 
             try {
-                window.firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
+                // Sesuai Path Database (default) Gratis - RULE 1
+                firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
                     .onSnapshot((snapshot) => {
-                        window.listPeserta = [];
+                        listPeserta = [];
                         snapshot.forEach((doc) => {
                             listPeserta.push(doc.data());
                         });
@@ -987,13 +1038,16 @@
                         calculateAndRenderStats(listPeserta);
                     }, (error) => {
                         console.error("Firestore listen error:", error);
+                        // Tampilkan pesan panduan log aturan keamanan jika eror
+                        if (error.message.includes("permission") || error.message.includes("Permissions")) {
+                            showToast("Izin database ditolak. Pastikan Firestore Security Rules proyek Anda sudah di-Publish!", "error");
+                        }
                     });
             } catch (err) {
                 console.error("Failed to start Firestore real-time sync:", err);
             }
         }
 
-        // ── FIXED: FUNGSI RESTORASI SELESAI CALCULATE AND RENDER STATS (MENCEGAH REFERENCEERROR) ──
         function calculateAndRenderStats(data) {
             let totalPendaftar = 0;
             let totalHadir = 0;
@@ -1024,35 +1078,50 @@
                 if (lombaVal.includes("tambang")) l3++;
             });
 
-            // Default kupon diubah menjadi 500 hibrida
             const sisaKuponVal = Math.max(0, 500 - totalHadir);
 
-            document.getElementById('stat-pendaftar').innerText = totalPendaftar;
-            document.getElementById('stat-hadir').innerText = totalHadir;
-            document.getElementById('stat-kupon').innerText = sisaKuponVal;
+            const dPendaftar = document.getElementById('stat-pendaftar');
+            const dHadir = document.getElementById('stat-hadir');
+            const dKupon = document.getElementById('stat-kupon');
+            const dTimMerah = document.getElementById('stat-tim-merah');
+            const dTimPutih = document.getElementById('stat-tim-putih');
+            const dLomba1 = document.getElementById('stat-lomba-1');
+            const dLomba2 = document.getElementById('stat-lomba-2');
+            const dLomba3 = document.getElementById('stat-lomba-3');
 
-            document.getElementById('stat-tim-merah').innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
-            document.getElementById('stat-tim-putih').innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
+            if (dPendaftar) dPendaftar.innerText = totalPendaftar;
+            if (dHadir) dHadir.innerText = totalHadir;
+            if (dKupon) dKupon.innerText = sisaKuponVal;
 
-            document.getElementById('stat-lomba-1').innerText = l1;
-            document.getElementById('stat-lomba-2').innerText = l2;
-            document.getElementById('stat-lomba-3').innerText = l3;
+            if (dTimMerah) dTimMerah.innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
+            if (dTimPutih) dTimPutih.innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
+
+            if (dLomba1) dLomba1.innerText = l1;
+            if (dLomba2) dLomba2.innerText = l2;
+            if (dLomba3) dLomba3.innerText = l3;
 
             const belumHadir = Math.max(0, totalPendaftar - totalHadir);
             updateAttendanceChart(totalHadir, belumHadir);
 
-            document.getElementById('chart-legend-hadir').innerText = totalHadir;
-            document.getElementById('chart-legend-hadir-pct').innerText = totalPendaftar > 0 ? Math.round((totalHadir / totalPendaftar) * 100) + "%" : "0%";
-            document.getElementById('chart-legend-belum').innerText = belumHadir;
-            document.getElementById('chart-legend-belum-pct').innerText = totalPendaftar > 0 ? Math.round((belumHadir / totalPendaftar) * 100) + "%" : "0%";
-            document.getElementById('chart-legend-total').innerText = totalPendaftar + " Relawan";
-            document.getElementById('chart-legend-kupon').innerText = sisaKuponVal + " Kupon";
+            const rHadir = document.getElementById('chart-legend-hadir');
+            const rHadirPct = document.getElementById('chart-legend-hadir-pct');
+            const rBelum = document.getElementById('chart-legend-belum');
+            const rBelumPct = document.getElementById('chart-legend-belum-pct');
+            const rTotal = document.getElementById('chart-legend-total');
+            const rKupon = document.getElementById('chart-legend-total-kupon');
+
+            if (rHadir) rHadir.innerText = totalHadir;
+            if (rHadirPct) rHadirPct.innerText = totalPendaftar > 0 ? Math.round((totalHadir / totalPendaftar) * 100) + "%" : "0%";
+            if (rBelum) rBelum.innerText = belumHadir;
+            if (rBelumPct) rBelumPct.innerText = totalPendaftar > 0 ? Math.round((belumHadir / totalPendaftar) * 100) + "%" : "0%";
+            if (rTotal) rTotal.innerText = totalPendaftar + " Relawan";
+            if (rKupon) rKupon.innerText = sisaKuponVal + " Kupon";
         }
 
-        // Proses Pemindaian Instan Firestore Kilat (<100ms)
         async function processRegistrationCode(idCode) {
             const normalizedCode = idCode.trim().toUpperCase();
 
+            // Guard: Jika firebase/user belum login, fallback langsung ke Sheets cadangan (RULE 3)
             if (!db || !currentUser) {
                 console.warn("Firebase belum terotorisasi atau tidak aktif. Menghubungkan lewat mode cadangan Google Sheets...");
                 processRegistrationCodeViaSheetsOnly(normalizedCode);
@@ -1069,7 +1138,7 @@
                 if (!docSnap.exists) {
                     showOverlay(false);
                     playSuccessSound(false);
-                    showToast("ID Registrasi tidak ditemukan di Firebase!", "error");
+                    showToast("ID Registrasi tidak ditemukan di Firebase! Pastikan G-Sheets tidak kosong dan sudah klik tombol Sinkron.", "error");
                     resetScanDisplayToStandby();
                     return;
                 }
@@ -1105,7 +1174,6 @@
                     }
                     triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
                 } else {
-                    // MODE CHECK-OUT SORE
                     if (pData.status !== "Sudah Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
@@ -1138,7 +1206,7 @@
         }
 
         async function processRegistrationCodeViaSheetsOnly(normalizedCode) {
-            showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server Sheets...");
+            showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server...");
             const toggleWaEl = document.getElementById('toggle-wa');
             const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
             try {
@@ -1177,63 +1245,95 @@
             }
         }
 
-        async function importSheetsToFirebase() {
+        function importSheetsToFirebase() {
             if (!currentUser) {
-                showToast("Firebase belum siap.", "error");
+                showToast("Firebase belum siap atau otorisasi gagal.", "error");
                 return;
             }
-            if (!confirm("Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud? Data lama di Firebase yang tidak ada di Google Sheets akan ikut terhapus untuk menyamakan database.")) {
-                return;
-            }
+            showCustomConfirm(
+                "Sinkronisasi Database",
+                "Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud? Data lama di Firebase yang tidak ada di Google Sheets akan ikut terhapus untuk menyamakan database.",
+                async function() {
+                    showOverlay(true, "Menghubungkan G-Sheets...", "Menarik data...");
+                    try {
+                        let url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
+                        const response = await fetch(url, { redirect: 'follow' });
+                        const sheetsData = await response.json();
+                        
+                        showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
+                        const batch = db.batch();
+                        
+                        listPeserta.forEach(p => {
+                            const oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                            batch.delete(oldDocRef);
+                        });
+                        
+                        sheetsData.forEach(p => {
+                            const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                            batch.set(docRef, {
+                                id: p.id.toString().toUpperCase(),
+                                nama: p.nama || "Tanpa Nama",
+                                unit: p.unit || "Umum",
+                                lomba: p.lomba || "-",
+                                phone: p.phone || "-",
+                                tim: p.tim || "-",
+                                waktuScan: p.waktuScan || "-",
+                                status: p.status || "Belum Hadir",
+                                statusPulang: p.statusPulang || "Belum Pulang",
+                                waktuScanPulang: p.waktuScanPulang || "-"
+                            });
+                        });
+                        
+                        await batch.commit();
+                        showOverlay(false);
+                        showToast("Sukses menyinkronkan database! Sekarang Firebase memiliki " + sheetsData.length + " data relawan.", "success");
+                    } catch (err) {
+                        showOverlay(false);
+                        showToast("Gagal Bulk Sync: " + err.message, "error");
+                    }
+                }
+            );
+        }
 
-            showOverlay(true, "Menghubungkan G-Sheets...", "Menarik data...");
-            try {
-                let url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
-                const response = await fetch(url, { redirect: 'follow' });
-                const sheetsData = await response.json();
+        function startClock() {
+            const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+            
+            setInterval(() => {
+                const now = new Date();
+                const dayName = days[now.getDay()];
+                const date = now.getDate();
+                const monthName = months[now.getMonth()];
+                const year = now.getFullYear();
+                const hour = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                const sec = String(now.getSeconds()).padStart(2, '0');
                 
-                showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
-                const batch = db.batch();
-                
-                // Langkah Penghapusan: Hapus semua entri lama yang ada di memori listPeserta agar sinkron total
-                listPeserta.forEach(p => {
-                    const oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
-                    batch.delete(oldDocRef);
-                });
-                
-                sheetsData.forEach(p => {
-                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
-                    batch.set(docRef, {
-                        id: p.id.toString().toUpperCase(),
-                        nama: p.nama || "Tanpa Nama",
-                        unit: p.unit || "Umum",
-                        lomba: p.lomba || "-",
-                        phone: p.phone || "-",
-                        tim: p.tim || "-",
-                        waktuScan: p.waktuScan || "-",
-                        status: p.status || "Belum Hadir",
-                        statusPulang: p.statusPulang || "Belum Pulang",
-                        waktuScanPulang: p.waktuScanPulang || "-"
-                    });
-                });
-                
-                await batch.commit();
-                showOverlay(false);
-                showToast("Sukses menyinkronkan database! Sekarang Firebase memiliki " + sheetsData.length + " data relawan.", "success");
-            } catch (err) {
-                showOverlay(false);
-                showToast("Gagal Bulk Sync: " + err.message, "error");
-            }
+                const clockEl = document.getElementById('real-time-clock');
+                if (clockEl) {
+                    clockEl.innerHTML = `${dayName}, ${date} ${monthName} ${year} • ${hour}:${min}:${sec} WIB`;
+                }
+            }, 1000);
         }
 
         function checkAppEnv() {
             const badge = document.getElementById('env-badge');
-            if (badge && API_URL) badge.innerHTML = '<i class="fa-solid fa-bolt"></i> <span>Firebase Real-time</span>';
+            if (!badge) return;
+            if (isGAS) {
+                badge.className = "inline-flex items-center gap-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold nav-label";
+                badge.innerHTML = '<i class="fa-solid fa-cloud"></i> <span class="nav-label">REST API Connected</span>';
+            } else {
+                badge.className = "inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold nav-label";
+                badge.innerHTML = '<i class="fa-solid =fa-desktop"></i> <span class="nav-label">Mode Simulator Vercel</span>';
+            }
         }
 
         async function fetchAPI(action, payload = null) {
+            if (!isGAS) return null;
+            
+            const options = { redirect: 'follow' };
             let url = API_URL;
-            let options = { redirect: 'follow' };
+            
             if (payload) {
                 options.method = 'POST';
                 options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
@@ -1242,8 +1342,134 @@
                 options.method = 'GET';
                 url += (url.includes('?') ? '&' : '?') + "action=" + action;
             }
-            const response = await fetch(url, options);
-            return await response.json();
+            
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
+                const text = await response.text();
+                
+                if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                    throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
+                }
+                return JSON.parse(text);
+            } catch (err) {
+                console.warn("Koneksi langsung gagal, mencoba proxy cadangan...", err);
+                if (!payload) {
+                    try {
+                        const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                        const aoResponse = await fetch(allOriginsUrl);
+                        if (!aoResponse.ok) throw new Error("AllOrigins failed");
+                        const aoJson = await aoResponse.json();
+                        const content = aoJson.contents;
+                        return JSON.parse(content);
+                    } catch (aoErr) {
+                        try {
+                            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                            const proxyResponse = await fetch(proxyUrl);
+                            const text = await proxyResponse.text();
+                            return JSON.parse(text);
+                        } catch (proxyErr) {
+                            throw new Error("Gagal menarik data dari Google Sheets. Periksa setelan deployment Anda.");
+                        }
+                    }
+                } else {
+                    throw err;
+                }
+            }
+        }
+
+        async function syncDatabase(isBackground = false) {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.add('fa-spin');
+            
+            if (!isBackground) showOverlay(true, "Sedang Sinkronisasi...", "Mengambil data terbaru...");
+
+            if (isGAS) {
+                try {
+                    const data = await fetchAPI("getParticipants");
+                    listPeserta = data;
+                    renderPesertaTable(listPeserta);
+                    await fetchStats();
+                    if (!isBackground) showOverlay(false);
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                } catch (error) {
+                    console.error("syncDatabase error:", error);
+                    if (!isBackground) {
+                        showToast("Koneksi Sheets API gagal: " + error.message, "error");
+                        showOverlay(false);
+                        if (error.message.includes("Anyone") || error.message.includes("Login HTML") || error.message.includes("Proxy")) {
+                            toggleApiErrorModal(true);
+                        }
+                    }
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                }
+            } else {
+                setTimeout(() => {
+                    if (!isBackground) showOverlay(false);
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                }, 800);
+            }
+        }
+
+        async function fetchStats() {
+            if (isGAS) {
+                try {
+                    const stats = await fetchAPI("getStats");
+                    updateDashboardStatsUI(stats);
+                } catch (err) {
+                    console.error("Gagal mengambil stats:", err);
+                }
+            }
+        }
+
+        function updateDashboardStatsUI(stats) {
+            const statPendaftar = document.getElementById('stat-pendaftar');
+            const statHadir = document.getElementById('stat-hadir');
+            const statKupon = document.getElementById('stat-kupon');
+            const statTimMerah = document.getElementById('stat-tim-merah');
+            const statTimPutih = document.getElementById('stat-tim-putih');
+            
+            if (statPendaftar) statPendaftar.innerText = stats.totalPendaftar;
+            if (statHadir) statHadir.innerText = stats.totalHadir;
+            if (statKupon) statKupon.innerText = stats.sisaKupon;
+
+            if (statTimMerah && stats.totalMerah !== undefined) {
+                statTimMerah.innerHTML = `${stats.totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirMerah || 0} hadir)</span>`;
+            }
+            if (statTimPutih && stats.totalPutih !== undefined) {
+                statTimPutih.innerHTML = `${stats.totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${stats.hadirPutih || 0} hadir)</span>`;
+            }
+
+            const sl1 = document.getElementById('stat-lomba-1');
+            const sl2 = document.getElementById('stat-lomba-2');
+            const sl3 = document.getElementById('stat-lomba-3');
+
+            if (stats.lomba1 !== undefined && sl1) sl1.innerText = stats.lomba1;
+            if (stats.lomba2 !== undefined && sl2) sl2.innerText = stats.lomba2;
+            if (stats.lomba3 !== undefined && sl3) sl3.innerText = stats.lomba3;
+
+            const hadir = Number(stats.totalHadir) || 0;
+            const total = Number(stats.totalPendaftar) || 0;
+            const belumHadir = Math.max(0, total - hadir);
+            const persentaseHadir = total > 0 ? Math.round((hadir / total) * 100) : 0;
+            const persentaseBelum = total > 0 ? Math.round((belumHadir / total) * 100) : 0;
+
+            const rHadir = document.getElementById('chart-legend-hadir');
+            const rHadirPct = document.getElementById('chart-legend-hadir-pct');
+            const rBelum = document.getElementById('chart-legend-belum');
+            const rBelumPct = document.getElementById('chart-legend-belum-pct');
+            const rTotal = document.getElementById('chart-legend-total');
+            const rKupon = document.getElementById('chart-legend-total-kupon');
+
+            if (rHadir) rHadir.innerText = hadir;
+            if (rHadirPct) rHadirPct.innerText = persentaseHadir + "% dari total";
+            if (rBelum) rBelum.innerText = belumHadir;
+            if (rBelumPct) rBelumPct.innerText = persentaseBelum + "% dari total";
+            
+            if (rTotal) rTotal.innerText = total + " Relawan";
+            if (rKupon) rKupon.innerText = stats.sisaKupon + " Kupon";
+
+            updateAttendanceChart(hadir, belumHadir);
         }
 
         function renderPesertaTable(data) {
@@ -1267,7 +1493,7 @@
                         <td class="p-4 font-semibold text-slate-800 text-sm border-r border-slate-200">${p.nama}</td>
                         <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.unit}</td>
                         <td class="p-4 text-sm font-semibold text-slate-700 border-r border-slate-200"><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-200 text-xs"><i class="fa-solid fa-trophy text-amber-500"></i> ${p.lomba}</span></td>
-                        <td class="p-4 text-sm font-bold border-r border-slate-200"><span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim}</span></td>
+                        <td class="p-4 text-sm font-bold border-r border-slate-200"><span class="px-2.5 py-1 rounded-full border ${timBadgeClass}">${p.tim || "-"}</span></td>
                         <td class="p-4 text-slate-600 text-sm border-r border-slate-200">${p.phone}</td>
                         <td class="p-4 border-r border-slate-200">${presensiLog}</td>
                         <td class="p-4 text-center"><span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeClass}">${p.status}</span></td>
@@ -1426,7 +1652,10 @@
                 type: 'doughnut', data: { labels: ['Sudah Check-In', 'Belum Datang'], datasets: [{ data: [hadir, belumHadir], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 2 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
             });
-            document.getElementById('chart-center-pct').innerText = (hadir + belumHadir) > 0 ? Math.round((hadir / (hadir + belumHadir)) * 100) + "%" : "0%";
+            const dCenterPct = document.getElementById('chart-center-pct');
+            if (dCenterPct) {
+                dCenterPct.innerText = (hadir + belumHadir) > 0 ? Math.round((hadir / (hadir + belumHadir)) * 100) + "%" : "0%";
+            }
         }
 
         function onScanSuccess(decodedText) {
@@ -1503,26 +1732,19 @@
                 const rPhone = document.getElementById('res-phone');
                 const rWaktu = document.getElementById('res-waktu');
                 const rTim = document.getElementById('res-tim'); 
-                const rPitaColor = document.getElementById('res-pita-color'); 
                 
                 if (rId) rId.innerText = result.data.id;
                 if (rNama) rNama.innerText = result.data.nama;
-                if (rUnit) rUnit.innerText = "Unit " + result.data.unit;
+                if (rUnit) rUnit.innerText = result.data.unit;
                 if (rPhone) rPhone.innerText = result.data.phone;
                 
                 if (rTim) {
-                    rTim.innerText = result.data.tim;
+                    rTim.innerText = result.data.tim || "-";
                     const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
                     const isPutih = result.data.tim && result.data.tim.toLowerCase().includes("putih");
                     rTim.className = isMerah ? "text-lg text-red-600 font-bold" : (isPutih ? "text-lg text-blue-600 font-bold" : "text-lg text-slate-500 font-bold");
                 }
 
-                if (rPitaColor) {
-                    const isMerah = result.data.tim && result.data.tim.toLowerCase().includes("merah");
-                    rPitaColor.innerText = isMerah ? "Merah" : "Putih";
-                    rPitaColor.className = isMerah ? "text-red-600 font-bold" : "text-blue-600 font-bold";
-                }
-                
                 const resSuccessMsg = document.getElementById('res-success-msg');
                 const badgeTitle = successCard.querySelector('span');
                 
@@ -1552,6 +1774,7 @@
                 }
                 
                 if (successCard) successCard.classList.remove('hidden');
+                triggerAsynchronousSheetsSync(result.data.id, currentScanMode, result.data.waktuScan || result.data.waktuScanPulang, result.data);
             } else if (result.alreadyCheckedIn || result.alreadyCheckedOut) {
                 playSuccessSound(false);
                 
@@ -1564,7 +1787,7 @@
                 
                 if (rwId) rwId.innerText = result.data.id;
                 if (rwNama) rwNama.innerText = result.data.nama;
-                if (rwUnit) rwUnit.innerText = "Unit " + result.data.unit;
+                if (rwUnit) rwUnit.innerText = result.data.unit;
                 
                 if (result.alreadyCheckedIn) {
                     if (warnBadgeTitle) warnBadgeTitle.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-1"></i> RE-ENTRY TERDETEKSI`;
@@ -1614,6 +1837,27 @@
             renderPesertaTable(filtered);
         }
 
+        window.onload = function() {
+            startClock();
+            checkAppEnv();
+            
+            const secureLinkEl = document.getElementById('current-secure-link');
+            if (secureLinkEl) {
+                secureLinkEl.innerText = window.location.href.replace("http://", "https://");
+            }
+
+            // Inisialisasi Otentikasi dan Firebase Real-time asinkron yang aman (RULE 3)
+            initFirebaseAndAuth();
+
+            // BACKGROUND AUTO-SYNC (Menarik data baru otomatis setiap 10 detik jika REST API terhubung)
+            setInterval(() => {
+                if (isGAS) syncDatabase(true); 
+            }, 10000); 
+
+            // Sync awal saat pertama dimuat
+            syncDatabase();
+        };
+
         // BINDING KESELURUHAN FUNGSI KE SKOP JENDELA BROWSER (WINDOW)
         window.switchView = switchView;
         window.setScanMode = setScanMode;
@@ -1634,11 +1878,57 @@
         window.playSuccesSound = playSuccessSound;
         window.displayScanResult = displayScanResult;
         window.filterParticipantsTable = filterParticipantsTable;
-        window.calculateAndRenderStats = calculateAndRenderStats; // Explicit global binding (New!)
+        window.calculateAndRenderStats = calculateAndRenderStats;
+        window.showOverlay = showOverlay;
+        window.showToast = showToast;
         window.syncDatabase = () => {
             showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
             startFirestoreRealtimeSync();
         };
+
+        async function sendEmailNotificationAPI(participantData) {
+            try {
+                const res = await fetchAPI("sendEmail", { data: participantData });
+                addWaLogToUI(participantData, res.success, res.logMessage);
+            } catch(err) {
+                addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
+            }
+        }
+
+        function addWaLogToUI(data, isSent, messageText) {
+            const container = document.getElementById('wa-logs-container');
+            const emptyEl = document.getElementById('wa-log-empty');
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            
+            const badgeClass = isSent ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200";
+            const badgeText = isSent ? "<i class='fa-solid fa-check'></i> Sent" : "<i class='fa-solid fa-triangle-exclamation'></i> Failed";
+
+            const logItem = `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm transition-all hover:bg-slate-100">
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeClass}">${badgeText}</span>
+                            <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${timeStr} WIB</span>
+                            <span class="text-xs font-bold text-indigo-900">${data.nama} (${data.id})</span>
+                            <span class="text-xs text-slate-500">→ ${data.phone}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-150 font-mono">${messageText}</p>
+                    </div>
+                </div>
+            `;
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', logItem);
+            }
+            
+            waLogs.push(data);
+            const wBadge = document.getElementById('wa-badge-count');
+            if (wBadge) {
+                wBadge.innerText = waLogs.length;
+            }
+        }
     </script>
 </body>
 </html>
