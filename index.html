@@ -400,7 +400,7 @@
                         </div>
 
                         <!-- ── FIXED CONTAINER ── -->
-                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full font-mono">
+                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full">
                             <div id="reader" class="absolute inset-0 w-full h-full"></div>
                             <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity z-10">
                                 <i class="fa-solid fa-camera-retro text-4xl text-blue-400 animate-bounce"></i>
@@ -436,6 +436,7 @@
                             <p class="text-sm max-w-sm">Arahkan QR Code pendaftaran peserta ke kamera atau ketikkan kode registrasi manual di panel samping.</p>
                         </div>
 
+                        <!-- Success Result Card -->
                         <div id="result-success" class="hidden bg-white border border-green-200 rounded-2xl p-6 shadow-md flex flex-col justify-center h-full animate-fade-in">
                             <div class="flex items-center gap-4 border-b border-slate-100 pb-4 mb-4">
                                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl animate-bounce">
@@ -722,7 +723,7 @@
 
         const appId = 'logistore-gudang';
         
-        // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda (Foto)
+        // Kredensial Firebase asli berdasarkan Project "logistore-gudang" milik Anda
         const firebaseConfig = {
             apiKey: "AIzaSyC2P8_jIiN59mSHbWhcQpG-sBRO56gNXtA",
             authDomain: "logistore-gudang.firebaseapp.com",
@@ -733,30 +734,230 @@
             appId: "1:193546714359:web:b3ccd1bfbc91046891a7f2"
         };
 
-        // Deklarasi global scope variable
-        let currentUser = null;
-        let listPeserta = [];
-        let waLogs = [];
-        let html5QrCode = null;
-        let attendanceChartInstance = null;
-        let isScannerActive = false;
-        let currentScanMode = "checkIn";
-        let firestoreUnsubscribe = null;
+        // Deklarasi global scope variable agar selalu terdefinisi sejak awal (Anti-ReferenceError)
+        window.currentUser = null;
+        window.listPeserta = [];
+        window.waLogs = [];
+        window.html5QrCode = null;
+        window.attendanceChartInstance = null;
+        window.isScannerActive = false;
+        window.currentScanMode = "checkIn";
+        window.firestoreUnsubscribe = null;
 
-        // ── FIXED: ISOLASI EROR FIREBASE PADA INSTANSI AWAL (TRY-CATCH SAFEGUARD) ──
+        // Mendefinisikan semua fungsi di awal agar ter-compile secara global
+        function switchView(targetViewId) {
+            document.querySelectorAll('.view-pane').forEach(pane => pane.classList.add('hidden'));
+            const targetPane = document.getElementById('view-' + targetViewId);
+            if (targetPane) targetPane.classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
+                btn.classList.add('text-gray-300');
+            });
+            
+            const activeBtn = document.getElementById('btn-' + targetViewId);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
+                activeBtn.classList.remove('text-gray-300');
+            }
+
+            const titles = {
+                dashboard: "Dashboard Registrasi",
+                scan: "Scan Registrasi Kehadiran",
+                peserta: "Rekap Data Kehadiran",
+                walogs: "Log Pengiriman Email"
+            };
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.innerText = titles[targetViewId] || "Registrasi";
+            
+            if (targetViewId !== 'scan' && window.isScannerActive) {
+                stopScanner();
+            } else if (targetViewId === 'scan') {
+                loadCameraDevices();
+                setTimeout(() => {
+                    startScanner();
+                    showToast("Kamera aktif otomatis!", "success");
+                }, 400);
+            }
+            
+            if (window.innerWidth < 768) {
+                toggleMobileSidebar();
+            }
+        }
+
+        function setScanMode(mode) {
+            window.currentScanMode = mode;
+            const checkInBtn = document.getElementById('mode-checkin-btn');
+            const checkOutBtn = document.getElementById('mode-checkout-btn');
+            
+            if (mode === "checkIn") {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                showToast("Beralih ke Sesi Check-In Pagi (Kupon & Pita)", "warning");
+            } else {
+                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
+                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-indigo-950 text-white shadow-sm";
+                showToast("Beralih ke Sesi Check-Out Sore (Souvenir & Sertifikat)", "warning");
+            }
+            resetScanDisplayToStandby();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            if (window.innerWidth < 768) {
+                toggleMobileSidebar();
+            } else {
+                sidebar.classList.toggle('sidebar-collapsed');
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    sidebar.style.width = '80px';
+                } else {
+                    sidebar.style.width = '288px';
+                }
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 300);
+            }
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const menu = document.getElementById('sidebar-menu');
+            
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
+            if (overlay) overlay.classList.toggle('hidden');
+            if (menu) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+            }
+        }
+
+        function manualSubmit() {
+            const inputVal = document.getElementById('manual-input').value.trim();
+            if (!inputVal) {
+                showToast("ID Registrasi kosong!", "error");
+                return;
+            }
+            processRegistrationCode(inputVal);
+            const mInput = document.getElementById('manual-input');
+            if (mInput) mInput.value = "";
+        }
+
+        function triggerSetupDatabase() {
+            if (confirm("Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?")) {
+                showOverlay(true);
+                if (API_URL) {
+                    fetchAPI("setupDatabase")
+                        .then(result => {
+                            showOverlay(false);
+                            if (result && result.success) {
+                                showToast("Database Google Sheet berhasil diinisiasi!", "success");
+                                syncDatabase();
+                            } else {
+                                showToast("Gagal setup database.", "error");
+                            }
+                        })
+                        .catch(err => {
+                            showOverlay(false);
+                            showToast("Setup gagal: " + err.message, "error");
+                        });
+                }
+            }
+        }
+
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const tMsg = document.getElementById('toast-message');
+            
+            if (tMsg) tMsg.innerText = msg;
+            
+            if (toast && icon) {
+                if (type === "success") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-check text-lg";
+                } else if (type === "warning") {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
+                } else {
+                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
+                    icon.className = "fa-solid fa-circle-xmark text-lg";
+                }
+            }
+            setTimeout(() => { 
+                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
+            }, 4000);
+        }
+
+        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
+            const overlay = document.getElementById('loading-overlay');
+            const titleEl = document.getElementById('overlay-title');
+            const descEl = document.getElementById('overlay-desc');
+            
+            if (titleEl) titleEl.innerText = title;
+            if (descEl) descEl.innerText = desc;
+            
+            if (overlay) {
+                overlay.classList.toggle('hidden', !show);
+            }
+        }
+
+        function toggleCameraBlockedModal(show) {
+            const modal = document.getElementById('camera-blocked-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+        }
+
+        function clearWaLogs() {
+            if (confirm("Bersihkan semua log pengiriman Email pada sesi ini?")) {
+                const container = document.getElementById('wa-logs-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
+                            <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
+                            <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
+                        </div>
+                    `;
+                }
+                window.waLogs = [];
+                const wBadge = document.getElementById('wa-badge-count');
+                if (wBadge) {
+                    wBadge.innerText = "0";
+                }
+                showToast("Log berhasil dibersihkan.");
+            }
+        }
+
+        function resetScanDisplayToStandby() {
+            const standby = document.getElementById('result-standby');
+            const successCard = document.getElementById('result-success');
+            const warningCard = document.getElementById('result-warning');
+
+            if (standby) standby.classList.remove('hidden');
+            if (successCard) successCard.classList.add('hidden');
+            if (warningCard) warningCard.classList.add('hidden');
+        }
+
+        // ISOLASI KONEKSI FIREBASE SECARA AMAN (PREVENT BLACK SCREEN/FREEZE)
         try {
             firebase.initializeApp(firebaseConfig);
             window.auth = firebase.auth();
             window.db = firebase.firestore();
 
-            // Login Otomatis secara Anonymously (RULE 3)
             auth.signInAnonymously().catch(err => {
                 console.error("Firebase Auth trigger failed:", err);
                 showToast("Otorisasi Firebase gagal. Menggunakan mode cadangan Google Sheets.", "error");
             });
 
             auth.onAuthStateChanged((user) => {
-                currentUser = user;
+                window.currentUser = user;
                 if (user) {
                     console.log("Firebase Connected Real-time. UID:", user.uid);
                     startFirestoreRealtimeSync();
@@ -774,10 +975,9 @@
             if (firestoreUnsubscribe) firestoreUnsubscribe();
 
             try {
-                // Sesuai Path Database (default) Gratis
-                firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
+                window.firestoreUnsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants')
                     .onSnapshot((snapshot) => {
-                        listPeserta = [];
+                        window.listPeserta = [];
                         snapshot.forEach((doc) => {
                             listPeserta.push(doc.data());
                         });
@@ -793,6 +993,7 @@
             }
         }
 
+        // ── FIXED: FUNGSI RESTORASI SELESAI CALCULATE AND RENDER STATS (MENCEGAH REFERENCEERROR) ──
         function calculateAndRenderStats(data) {
             let totalPendaftar = 0;
             let totalHadir = 0;
@@ -852,7 +1053,6 @@
         async function processRegistrationCode(idCode) {
             const normalizedCode = idCode.trim().toUpperCase();
 
-            // ── FIXED: OTOMATIS BERALIH KE CADANGAN SHEETS JIKA FIREBASE PROYEK BELUM SIAP (ANTI-CRASH) ──
             if (!db || !currentUser) {
                 console.warn("Firebase belum terotorisasi atau tidak aktif. Menghubungkan lewat mode cadangan Google Sheets...");
                 processRegistrationCodeViaSheetsOnly(normalizedCode);
@@ -937,7 +1137,6 @@
             }
         }
 
-        // ── FIXED: SISTEM PENYELAMATAN CADANGAN GOOGLE SHEETS JIKA FIREBASE PROYEK OFF (ANTI-MOGOK) ──
         async function processRegistrationCodeViaSheetsOnly(normalizedCode) {
             showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server Sheets...");
             const toggleWaEl = document.getElementById('toggle-wa');
@@ -951,7 +1150,6 @@
                     sendEmailNotificationAPI(result.data);
                 }
                 
-                // SISTEM COOLDOWN & AUTO-RESTART KAMERA (5 DETIK)
                 const activePane = document.querySelector('.view-pane:not(.hidden)');
                 if (activePane && activePane.id === 'view-scan') {
                     showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
@@ -969,7 +1167,6 @@
             }
         }
 
-        // Sinkronisasi Latar Belakang & Kirim Email Bukti
         function triggerAsynchronousSheetsSync(idRegistrasi, mode, timestamp, fullData) {
             if (API_URL) {
                 fetch(API_URL, {
@@ -980,8 +1177,6 @@
             }
         }
 
-        // Bulk Seeding dari Google Sheets ke Firebase Cloud
-        // Membersihkan data lama di Firebase agar sinkronisasi baris yang dihapus di Sheets terhapus total
         async function importSheetsToFirebase() {
             if (!currentUser) {
                 showToast("Firebase belum siap.", "error");
@@ -1006,7 +1201,6 @@
                     batch.delete(oldDocRef);
                 });
                 
-                // Langkah Penulisan: Tambahkan entri baru dari Sheets
                 sheetsData.forEach(p => {
                     const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
                     batch.set(docRef, {
@@ -1030,199 +1224,6 @@
                 showOverlay(false);
                 showToast("Gagal Bulk Sync: " + err.message, "error");
             }
-        }
-
-        // ====================================================================
-        // ESSENTIAL HELPER FUNCTIONS (RESTORED TO FIX INTERFACE FREEZE)
-        // ====================================================================
-
-        function switchView(targetViewId) {
-            document.querySelectorAll('.view-pane').forEach(pane => pane.classList.add('hidden'));
-            const targetPane = document.getElementById('view-' + targetViewId);
-            if (targetPane) targetPane.classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
-                btn.classList.add('text-gray-300');
-            });
-            
-            const activeBtn = document.getElementById('btn-' + targetViewId);
-            if (activeBtn) {
-                activeBtn.classList.add('active', 'bg-[#3b3c8f]', 'text-white', 'border-navy-yellow');
-                activeBtn.classList.remove('text-gray-300');
-            }
-
-            const titles = {
-                dashboard: "Dashboard Registrasi",
-                scan: "Scan Registrasi Kehadiran",
-                peserta: "Rekap Data Kehadiran",
-                walogs: "Log Pengiriman Email"
-            };
-            const titleEl = document.getElementById('page-title');
-            if (titleEl) titleEl.innerText = titles[targetViewId] || "Registrasi";
-            
-            if (targetViewId !== 'scan' && isScannerActive) {
-                stopScanner();
-            } else if (targetViewId === 'scan') {
-                loadCameraDevices();
-                setTimeout(() => {
-                    startScanner();
-                    showToast("Kamera aktif otomatis!", "success");
-                }, 400);
-            }
-            
-            if (window.innerWidth < 768) {
-                toggleMobileSidebar();
-            }
-        }
-
-        function setScanMode(mode) {
-            currentScanMode = mode;
-            const checkInBtn = document.getElementById('mode-checkin-btn');
-            const checkOutBtn = document.getElementById('mode-checkout-btn');
-            
-            if (mode === "checkIn") {
-                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-blue-600 text-white shadow-sm";
-                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
-                showToast("Beralih ke Sesi Check-In Pagi (Kupon & Pita)", "warning");
-            } else {
-                checkInBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center text-slate-600 hover:bg-slate-200";
-                checkOutBtn.className = "flex-grow py-2.5 text-xs font-bold rounded-lg transition-all text-center bg-indigo-950 text-white shadow-sm";
-                showToast("Beralih ke Sesi Check-Out Sore (Souvenir & Sertifikat)", "warning");
-            }
-            resetScanDisplayToStandby();
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (!sidebar) return;
-
-            if (window.innerWidth < 768) {
-                toggleMobileSidebar();
-            } else {
-                sidebar.classList.toggle('sidebar-collapsed');
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    sidebar.style.width = '80px';
-                } else {
-                    sidebar.style.width = '288px';
-                }
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 300);
-            }
-        }
-
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const menu = document.getElementById('sidebar-menu');
-            
-            if (sidebar) sidebar.classList.toggle('-translate-x-full');
-            if (overlay) overlay.classList.toggle('hidden');
-            if (menu) {
-                menu.classList.remove('hidden');
-                menu.classList.add('flex');
-            }
-        }
-
-        function triggerSetupDatabase() {
-            if (confirm("Apakah Anda yakin ingin melakukan inisiasi / sinkronisasi kolom ke Google Sheets?")) {
-                showOverlay(true);
-                if (API_URL) {
-                    fetchAPI("setupDatabase")
-                        .then(result => {
-                            showOverlay(false);
-                            if (result && result.success) {
-                                showToast("Database Google Sheet berhasil diinisiasi!", "success");
-                                syncDatabase();
-                            } else {
-                                showToast("Gagal setup database.", "error");
-                            }
-                        })
-                        .catch(err => {
-                            showOverlay(false);
-                            showToast("Setup gagal: " + err.message, "error");
-                        });
-                }
-            }
-        }
-
-        function showToast(msg, type = "success") {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const tMsg = document.getElementById('toast-message');
-            
-            if (tMsg) tMsg.innerText = msg;
-            
-            if (toast && icon) {
-                if (type === "success") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-check text-lg";
-                } else if (type === "warning") {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-triangle-exclamation text-lg";
-                } else {
-                    toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3";
-                    icon.className = "fa-solid fa-circle-xmark text-lg";
-                }
-            }
-            setTimeout(() => { 
-                if (toast) toast.classList.add('translate-y-24', 'opacity-0'); 
-            }, 4000);
-        }
-
-        function showOverlay(show, title = "Sedang Sinkronisasi...", desc = "Memproses permintaan...") {
-            const overlay = document.getElementById('loading-overlay');
-            const titleEl = document.getElementById('overlay-title');
-            const descEl = document.getElementById('overlay-desc');
-            
-            if (titleEl) titleEl.innerText = title;
-            if (descEl) descEl.innerText = desc;
-            
-            if (overlay) {
-                overlay.classList.toggle('hidden', !show);
-            }
-        }
-
-        function toggleCameraBlockedModal(show) {
-            const modal = document.getElementById('camera-blocked-modal');
-            if (modal) {
-                if (show) {
-                    modal.classList.remove('hidden');
-                } else {
-                    modal.classList.add('hidden');
-                }
-            }
-        }
-
-        function clearWaLogs() {
-            if (confirm("Bersihkan semua log pengiriman Email pada sesi ini?")) {
-                const container = document.getElementById('wa-logs-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div id="wa-log-empty" class="text-center py-12 text-slate-400 text-sm">
-                            <i class="fa-solid fa-envelope-circle-check text-5xl text-slate-300 mb-2"></i>
-                            <p>Belum ada notifikasi Email yang terkirim pada sesi ini.</p>
-                        </div>
-                    `;
-                }
-                waLogs = [];
-                const wBadge = document.getElementById('wa-badge-count');
-                if (wBadge) {
-                    wBadge.innerText = "0";
-                }
-                showToast("Log berhasil dibersihkan.");
-            }
-        }
-
-        function resetScanDisplayToStandby() {
-            const standby = document.getElementById('result-standby');
-            const successCard = document.getElementById('result-success');
-            const warningCard = document.getElementById('result-warning');
-
-            if (standby) standby.classList.remove('hidden');
-            if (successCard) successCard.classList.add('hidden');
-            if (warningCard) warningCard.classList.add('hidden');
         }
 
         function checkAppEnv() {
@@ -1331,7 +1332,6 @@
 
         async function onCameraChange() { if (isScannerActive && html5QrCode) { await html5QrCode.stop(); isScannerActive = false; startScanner(); } }
 
-        // ── FIXED: DIUBAH PENGATURAN TRANSISI DAN SINKRONISASI RANTAI CADANGAN KAMERA OTOMATIS (FAILSAFE KILAT) ──
         function startScanner() {
             const select = document.getElementById('camera-select');
             const selectedCameraId = select && select.value !== "" ? select.value : null;
@@ -1349,9 +1349,8 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            // Hitung ukuran qrbox secara dinamis berbasis persentase resolusi asli HP/Laptop (Anti-Collapse)
             const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-                let minEdgePercentage = 0.7; // 70% dari resolusi
+                let minEdgePercentage = 0.7;
                 let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
                 let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
                 return {
@@ -1373,7 +1372,6 @@
 
             const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
 
-            // ── FIXED: SISTEM PENYELAMATAN RANTAI CADANGAN KAMERA BERTAHAP (ANTI-CRASH) ──
             const tryStart = (cameraSource, attemptNum = 1) => {
                 html5QrCode.start(
                     cameraSource, 
@@ -1388,13 +1386,10 @@
                 }).catch(err => {
                     console.warn(`Upaya pemuatan kamera ke-${attemptNum} gagal:`, err);
                     if (attemptNum === 1) {
-                        // Upaya 2: Fallback ke kamera belakang secara otomatis
                         tryStart({ facingMode: "environment" }, 2);
                     } else if (attemptNum === 2) {
-                        // Upaya 3: Fallback ke kamera depan secara otomatis
                         tryStart({ facingMode: "user" }, 3);
                     } else if (attemptNum === 3) {
-                        // Upaya 4: Fallback ke setelan default browser (kosongkan constraint)
                         tryStart({}, 4);
                     } else {
                         console.error("Seluruh rantai cadangan kamera gagal diinisiasi:", err);
@@ -1434,13 +1429,11 @@
             document.getElementById('chart-center-pct').innerText = (hadir + belumHadir) > 0 ? Math.round((hadir / (hadir + belumHadir)) * 100) + "%" : "0%";
         }
 
-        // Restored scan success and failure functions
         function onScanSuccess(decodedText) {
             processRegistrationCode(decodedText);
             stopScanner();
         }
 
-        // Sound Feedback Controller (Fallback to Web Audio API Synthesizer)
         function playSuccessSound(isSuccess) {
             if (isSuccess === undefined || isSuccess === true) {
                 try {
@@ -1484,79 +1477,7 @@
             }
         }
 
-        function onScanFailure(error) {
-            // Meredam log warning berkala dari pembacaan kamera agar konsol tidak banjir log
-        }
-
-        // BINDING FUNCTIONS TO THE WINDOW SCOPE
-        window.switchView = switchView;
-        window.setScanMode = setScanMode;
-        window.toggleSidebar = toggleSidebar;
-        window.toggleMobileSidebar = toggleMobileSidebar;
-        window.importSheetsToFirebase = importSheetsToFirebase;
-        window.triggerSetupDatabase = triggerSetupDatabase;
-        window.onCameraChange = onCameraChange;
-        window.requestCameraPermission = requestCameraPermission;
-        window.startScanner = startScanner;
-        window.stopScanner = stopScanner;
-        window.manualSubmit = manualSubmit;
-        window.toggleCameraBlockedModal = toggleCameraBlockedModal;
-        window.clearWaLogs = clearWaLogs;
-        window.onScanSuccess = onScanSuccess;
-        window.onScanFailure = onScanFailure; 
-        window.playSuccessSound = playSuccessSound;
-        window.playSuccesSound = playSuccessSound; // Typo alias failsafe! (FIXED)
-        window.playSuccessSoundReal = () => playSuccessSound(true);
-        window.playFailSoundReal = () => playSuccessSound(false);
-        window.syncDatabase = () => {
-            showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
-            startFirestoreRealtimeSync();
-        };
-
-        // Panggil REST API untuk kirim email
-        async function sendEmailNotificationAPI(participantData) {
-            try {
-                const res = await fetchAPI("sendEmail", { data: participantData });
-                addWaLogToUI(participantData, res.success, res.logMessage);
-            } catch(err) {
-                addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
-            }
-        }
-
-        function addWaLogToUI(data, isSent, messageText) {
-            const container = document.getElementById('wa-logs-container');
-            const emptyEl = document.getElementById('wa-log-empty');
-            if (emptyEl) emptyEl.classList.add('hidden');
-
-            const now = new Date();
-            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
-            
-            const badgeClass = isSent ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200";
-            const badgeText = isSent ? "<i class='fa-solid fa-check'></i> Sent" : "<i class='fa-solid fa-triangle-exclamation'></i> Failed";
-
-            const logItem = `
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm transition-all hover:bg-slate-100">
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeClass}">${badgeText}</span>
-                            <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${timeStr} WIB</span>
-                            <span class="text-xs font-bold text-indigo-900">${data.nama} (${data.id})</span>
-                            <span class="text-xs text-slate-500">→ ${data.phone}</span>
-                        </div>
-                        <p class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-150 font-mono">${messageText}</p>
-                    </div>
-                </div>
-            `;
-            if (container) {
-                container.insertAdjacentHTML('afterbegin', logItem);
-            }
-            
-            waLogs.push(data);
-            const wBadge = document.getElementById('wa-badge-count');
-            if (wBadge) {
-                wBadge.innerText = waLogs.length;
-            }
-        }
+        function onScanFailure(error) {}
 
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
@@ -1693,22 +1614,31 @@
             renderPesertaTable(filtered);
         }
 
-        // Restored manualSubmit function (FIXED - ADDED BACK)
-        function manualSubmit() {
-            const inputVal = document.getElementById('manual-input').value.trim();
-            if (!inputVal) {
-                showToast("ID Registrasi kosong!", "error");
-                return;
-            }
-            processRegistrationCode(inputVal);
-            const mInput = document.getElementById('manual-input');
-            if (mInput) mInput.value = "";
-        }
-
-        // BINDING EXTRA FUNCTIONS TO WINDOW SCOPE AS SAFEGUARD
+        // BINDING KESELURUHAN FUNGSI KE SKOP JENDELA BROWSER (WINDOW)
+        window.switchView = switchView;
+        window.setScanMode = setScanMode;
+        window.toggleSidebar = toggleSidebar;
+        window.toggleMobileSidebar = toggleMobileSidebar;
+        window.importSheetsToFirebase = importSheetsToFirebase;
+        window.triggerSetupDatabase = triggerSetupDatabase;
+        window.onCameraChange = onCameraChange;
+        window.requestCameraPermission = requestCameraPermission;
+        window.startScanner = startScanner;
+        window.stopScanner = stopScanner;
+        window.manualSubmit = manualSubmit;
+        window.toggleCameraBlockedModal = toggleCameraBlockedModal;
+        window.clearWaLogs = clearWaLogs;
+        window.onScanSuccess = onScanSuccess;
+        window.onScanFailure = onScanFailure; 
+        window.playSuccessSound = playSuccessSound;
+        window.playSuccesSound = playSuccessSound;
         window.displayScanResult = displayScanResult;
         window.filterParticipantsTable = filterParticipantsTable;
-        window.manualSubmit = manualSubmit;
+        window.calculateAndRenderStats = calculateAndRenderStats; // Explicit global binding (New!)
+        window.syncDatabase = () => {
+            showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
+            startFirestoreRealtimeSync();
+        };
     </script>
 </body>
 </html>
