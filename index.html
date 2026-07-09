@@ -466,7 +466,7 @@
                                         <strong id="res-unit" class="text-slate-700 font-semibold">Memuat...</strong>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-slate-500 font-semibold mb-1">Tim</p>
+                                        <p class="text-xs text-slate-500 font-semibold mb-1">Kubu / Tim</p>
                                         <strong id="res-tim" class="text-lg">Memuat...</strong>
                                     </div>
                                     <div class="col-span-2">
@@ -567,7 +567,7 @@
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Nama Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Lokasi Kantor/Unit</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Pilihan Lomba</th>
-                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Tim</th>
+                                    <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Kubu / Tim</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Email Peserta</th>
                                     <th class="p-4 text-xs font-bold uppercase border-r border-[#3b3c8f]/40">Log Presensi (Datang / Pulang)</th>
                                     <th class="p-4 text-xs font-bold uppercase text-center">Status</th>
@@ -1773,6 +1773,22 @@
 
         function onScanFailure(error) {}
 
+        // ── DIUBAH: INTEGRASI SYSTEM AUTO-RESTART COOLDOWN PINTAR (DIPERCEPAT MENJADI 1.5 DETIK) ──
+        function autoRestartScannerWithCooldown() {
+            var activePane = document.querySelector('.view-pane:not(.hidden)');
+            if (activePane && activePane.id === 'view-scan') {
+                setTimeout(function() {
+                    var currentPane = document.querySelector('.view-pane:not(.hidden)');
+                    if (currentPane && currentPane.id === 'view-scan') {
+                        if (!isScannerActive) {
+                            startScanner();
+                            showToast("Scanner Siap!", "success");
+                        }
+                    }
+                }, 1500); // Dijeda hanya 1.5 detik saja untuk kecepatan maksimal antrean
+            }
+        }
+
         function displayScanResult(result) {
             const standby = document.getElementById('result-standby');
             const successCard = document.getElementById('result-success');
@@ -1828,9 +1844,9 @@
                     showToast("Selamat registrasi check-in berhasil!", "success");
                 } else {
                     if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
-                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Souvenir Berhasil Diserahkan!"</span>`;
+                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
                     if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang || result.data.waktuScan}`;
-                    showToast("Souvenir Berhasil Diserahkan!", "success");
+                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
@@ -1872,6 +1888,9 @@
                 showToast(result.message, "error");
                 if (standby) standby.classList.remove('hidden');
             }
+
+            // Memicu auto restart kamera setelah visual checking tampil
+            autoRestartScannerWithCooldown();
         }
 
         function filterParticipantsTable() {
