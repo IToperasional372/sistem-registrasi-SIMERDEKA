@@ -387,20 +387,15 @@
                             </button>
                         </div>
 
-                        <div class="flex flex-col gap-1.5 mt-2">
-                            <label for="camera-select" class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-video mr-1"></i> Pilih Perangkat Kamera PC/HP:</label>
-                            <div class="flex gap-2">
-                                <select id="camera-select" onchange="onCameraChange()" class="flex-grow border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
-                                    <option value="">-- Menunggu Akses Kamera... --</option>
-                                </select>
-                                <button onclick="requestCameraPermission()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow" title="Paksa Minta Izin Kamera">
-                                    <i class="fa-solid fa-key"></i> Izin
-                                </button>
-                            </div>
+                        <!-- ── DIUBAH: SELEKTOR KAMERA DISEMBUNYIKAN SECARA TOTAL AGAR TIDAK MUNCUL PILIHAN KAMERA DEPAN ── -->
+                        <div class="hidden">
+                            <select id="camera-select" onchange="onCameraChange()">
+                                <option value="">Default Kamera Belakang</option>
+                            </select>
                         </div>
 
                         <!-- CONTAINER KAMERA -->
-                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full">
+                        <div class="bg-slate-900 rounded-xl aspect-square relative overflow-hidden border-4 border-slate-800 w-full mt-2">
                             <div id="reader" class="absolute inset-0 w-full h-full"></div>
                             <div id="camera-loading" class="absolute inset-0 bg-slate-950/90 flex flex-col justify-center items-center text-white p-6 text-center gap-4 transition-opacity z-10">
                                 <i class="fa-solid fa-camera-retro text-4xl text-blue-400 animate-bounce"></i>
@@ -411,14 +406,14 @@
                         
                         <div class="flex gap-2">
                             <button id="btn-start-camera" onclick="startScanner()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300">
-                                <i class="fa-solid fa-play"></i> Aktifkan Kamera
+                                <i class="fa-solid fa-play"></i> Aktifkan Kamera Belakang
                             </button>
                             <button id="btn-stop-camera" onclick="stopScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-slate-300 hidden">
                                 <i class="fa-solid fa-stop"></i> Matikan Kamera
                             </button>
                         </div>
 
-                        <div class="border-t border-slate-100 pt-4 flex flex-col gap-2 mt-2">
+                    <div class="border-t border-slate-100 pt-4 flex flex-col gap-2 mt-2">
                             <label class="text-xs font-bold text-slate-600 uppercase"><i class="fa-solid fa-barcode text-blue-600 mr-1"></i> Input Manual / Scanner USB</label>
                             <div class="flex gap-2">
                                 <input type="text" id="manual-input" placeholder="Tembak Scanner USB di sini..." class="flex-grow border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent uppercase font-mono" onkeydown="if(event.key === 'Enter') manualSubmit()">
@@ -734,7 +729,6 @@
         var appId = typeof __app_id !== 'undefined' ? __app_id : 'logistore-gudang';
         var isGAS = API_URL !== "" && API_URL.startsWith("http");
         
-        // Failsafe parsing untuk config Firebase
         var firebaseConfig = {
             apiKey: "AIzaSyC2P8_jIiN59mSHbWhcQpG-sBRO56gNXtA",
             authDomain: "logistore-gudang.firebaseapp.com",
@@ -1604,15 +1598,12 @@
 
         async function onCameraChange() { if (isScannerActive && html5QrCode) { await html5QrCode.stop(); isScannerActive = false; startScanner(); } }
 
+        // ── FIXED: STRATEGI FORCED REAR CAMERA & SINKRONISASI COOLDOWN PINTAR (ANTI-FRONT-CAMERA-BUG) ──
         function startScanner() {
-            const select = document.getElementById('camera-select');
-            const selectedCameraId = select && select.value !== "" ? select.value : null;
-            const selectText = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.toLowerCase() : "";
-            
-            const camLoading = document.getElementById('camera-loading');
-            const scannerLine = document.getElementById('scanner-laser-line');
-            const btnStart = document.getElementById('btn-start-camera');
-            const btnStop = document.getElementById('btn-stop-camera');
+            var camLoading = document.getElementById('camera-loading');
+            var scannerLine = document.getElementById('scanner-laser-line');
+            var btnStart = document.getElementById('btn-start-camera');
+            var btnStop = document.getElementById('btn-stop-camera');
 
             if (btnStart) btnStart.classList.add('hidden');
             if (btnStop) btnStop.classList.remove('hidden');
@@ -1621,7 +1612,7 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+            var qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
                 let minEdgePercentage = 0.7;
                 let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
                 let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
@@ -1631,22 +1622,30 @@
                 };
             };
             
-            const config = { 
+            var config = { 
                 fps: 30, 
                 qrbox: qrboxFunction,
-                disableFlip: false 
+                disableFlip: true // Nonaktifkan efek cermin untuk membaca kode dengan akurat di kamera belakang
             };
 
-            let fallbackFacingMode = "user";
-            if (selectText.includes("back") || selectText.includes("rear") || selectText.includes("belakang") || selectText.includes("environment")) {
-                fallbackFacingMode = "environment";
-            }
+            // Strategi 1: Cari kamera belakang asli berdasarkan label teks hardware
+            Html5Qrcode.getCameras().then(devices => {
+                var backCameraId = null;
+                if (devices && devices.length > 0) {
+                    for (var i = 0; i < devices.length; i++) {
+                        var label = devices[i].label.toLowerCase();
+                        if (label.includes("back") || label.includes("rear") || label.includes("belakang") || label.includes("environment")) {
+                            backCameraId = devices[i].id;
+                            break;
+                        }
+                    }
+                }
+                
+                // Gunakan ID kamera belakang jika terdeteksi, atau fallback ke keyword standard 'environment'
+                var finalTarget = backCameraId ? backCameraId : { facingMode: "environment" };
 
-            const targetCamera = selectedCameraId ? selectedCameraId : { facingMode: fallbackFacingMode };
-
-            const tryStart = (cameraSource, attemptNum = 1) => {
                 html5QrCode.start(
-                    cameraSource, 
+                    finalTarget, 
                     config, 
                     onScanSuccess, 
                     onScanFailure
@@ -1656,22 +1655,42 @@
                     if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
                     if (scannerLine) scannerLine.classList.remove('hidden');
                 }).catch(err => {
-                    console.warn(`Upaya pemuatan kamera ke-${attemptNum} gagal:`, err);
-                    if (attemptNum === 1) {
-                        tryStart({ facingMode: "environment" }, 2);
-                    } else if (attemptNum === 2) {
-                        tryStart({ facingMode: "user" }, 3);
-                    } else if (attemptNum === 3) {
-                        tryStart({}, 4);
-                    } else {
-                        console.error("Seluruh rantai cadangan kamera gagal diinisiasi:", err);
+                    console.warn("Gagal membuka kamera belakang dengan target ID, mencoba fallback mode standard...", err);
+                    
+                    // Fallback Strategi 2: Paksa facingMode environment standard W3C
+                    html5QrCode.start(
+                        { facingMode: "environment" }, 
+                        config, 
+                        onScanSuccess, 
+                        onScanFailure
+                    ).then(() => {
+                        isScannerActive = true;
+                        toggleCameraBlockedModal(false);
+                        if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
+                        if (scannerLine) scannerLine.classList.remove('hidden');
+                    }).catch(err2 => {
+                        console.error("Seluruh metode pembukaan kamera belakang gagal:", err2);
                         toggleCameraBlockedModal(true);
                         stopScanner();
-                    }
+                    });
                 });
-            };
-
-            tryStart(targetCamera, 1);
+            }).catch(e => {
+                // Fallback Strategi 3: Jika enumerasi gagal, langsung tembak constraint facingMode standard
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                ).then(() => {
+                    isScannerActive = true;
+                    toggleCameraBlockedModal(false);
+                    if (camLoading) camLoading.classList.add('opacity-0', 'hidden');
+                    if (scannerLine) scannerLine.classList.remove('hidden');
+                }).catch(err => {
+                    toggleCameraBlockedModal(true);
+                    stopScanner();
+                });
+            });
         }
 
         function stopScanner() {
@@ -1907,14 +1926,14 @@
         window.showOverlay = showOverlay;
         window.showToast = showToast;
         window.resetScanDisplayToStandby = resetScanDisplayToStandby; 
-        window.startClock = startClock; // EXPLICIT GLOBAL BINDING (FIXED!)
+        window.startClock = startClock;
         window.syncDatabase = () => {
             showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
             startFirestoreRealtimeSync();
         };
 
         window.onload = function() {
-            startClock(); // Sekarang dijamin terpanggil lancar (FIXED!)
+            startClock();
             checkAppEnv();
             
             const secureLinkEl = document.getElementById('current-secure-link');
