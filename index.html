@@ -727,17 +727,15 @@
         </div>
     </div>
 
-    <!-- 3. JAVASCRIPT CORE IMPLEMENTATION -->
+    <!-- 3. JAVASCRIPT & FIREBASE CORE IMPLEMENTATION -->
     <script>
         // Set all vital scoping variables
         var API_URL = "https://script.google.com/macros/s/AKfycbx8kgBvtcCS2S9WsUFI6HaThDGKwiQrdmj5jLCf41EhWABzTRxKBIJv3xnspzwGXkcQ/exec"; 
-        
-        // ── DIUBAH: INTEGRASI FIREBASE MULTI-ENVIRONMENT (FAILSAFE CANVAS & PROD) ──
-        // Menggunakan Variabel Lingkungan Canvas jika tersedia, atau mengembalikan ke kredensial asli project Anda saat di-deploy
         var appId = typeof __app_id !== 'undefined' ? __app_id : 'logistore-gudang';
         var isGAS = API_URL !== "" && API_URL.startsWith("http");
         
-        var firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Failsafe parsing untuk config Firebase
+        var firebaseConfig = {
             apiKey: "AIzaSyC2P8_jIiN59mSHbWhcQpG-sBRO56gNXtA",
             authDomain: "logistore-gudang.firebaseapp.com",
             databaseURL: "https://logistore-gudang-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -746,6 +744,18 @@
             messagingSenderId: "193546714359",
             appId: "1:193546714359:web:b3ccd1bfbc91046891a7f2"
         };
+
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                if (typeof __firebase_config === 'string') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } else if (typeof __firebase_config === 'object') {
+                    firebaseConfig = __firebase_config;
+                }
+            } catch (e) {
+                console.error("Gagal melakukan parse dinamis __firebase_config:", e);
+            }
+        }
 
         var auth = null;
         var db = null;
@@ -758,7 +768,7 @@
         var currentScanMode = "checkIn";
         var firestoreUnsubscribe = null;
 
-        // ── RESTORED UI CONTROLLERS ──
+        // ── RESTORED UI CONTROLLERS (MENCEGAH REFERENCEERROR SAAT INITIAL LOADING) ──
         
         function showToast(msg, type = "success") {
             const toast = document.getElementById('toast');
@@ -958,7 +968,16 @@
             );
         }
 
-        // Custom Confirm Modal Handler
+        function resetScanDisplayToStandby() {
+            const standby = document.getElementById('result-standby');
+            const successCard = document.getElementById('result-success');
+            const warningCard = document.getElementById('result-warning');
+
+            if (standby) standby.classList.remove('hidden');
+            if (successCard) successCard.classList.add('hidden');
+            if (warningCard) warningCard.classList.add('hidden');
+        }
+
         function showCustomConfirm(title, desc, onConfirm) {
             const modal = document.getElementById('confirm-modal');
             const titleEl = document.getElementById('confirm-modal-title');
@@ -981,8 +1000,30 @@
             };
         }
 
-        // ── DIUBAH: MEKANISME OTENTIKASI & SYNC KEAMANAN FAILSAFE (RULE 3) ──
-        async function initFirebaseAndAuth() {
+        // ── INTI: FUNGSI MEMUTAR JAM DIGITAL YANG SEBELUMNYA HILANG (FIXED!) ──
+        function startClock() {
+            var days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            var months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+            
+            setInterval(function() {
+                var now = new Date();
+                var dayName = days[now.getDay()];
+                var date = now.getDate();
+                var monthName = months[now.getMonth()];
+                var year = now.getFullYear();
+                var hour = String(now.getHours()).padStart(2, '0');
+                var min = String(now.getMinutes()).padStart(2, '0');
+                var sec = String(now.getSeconds()).padStart(2, '0');
+                
+                var clockEl = document.getElementById('real-time-clock');
+                if (clockEl) {
+                    clockEl.innerHTML = dayName + ", " + date + " " + monthName + " " + year + " • " + hour + ":" + min + ":" + sec + " WIB";
+                }
+            }, 1000);
+        }
+
+        // ── INTI: MEKANISME OTENTIKASI & KONEKSI KEAMANAN SINKRONISASI COMPAT (RULE 3) ──
+        function initFirebaseAndAuth() {
             try {
                 if (typeof firebase === 'undefined') {
                     throw new Error("SDK Firebase tidak terdeteksi.");
@@ -992,25 +1033,32 @@
                 auth = firebase.auth();
                 db = firebase.firestore();
 
+                var loginPromise;
                 // Selalu panggil otentikasi di awal dan await (RULE 3)
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
+                    loginPromise = auth.signInWithCustomToken(__initial_auth_token);
                 } else {
-                    await auth.signInAnonymously();
+                    loginPromise = auth.signInAnonymously();
                 }
 
-                auth.onAuthStateChanged((user) => {
-                    currentUser = user;
-                    if (user) {
-                        console.log("Firebase Connected Real-time. UID:", user.uid);
-                        startFirestoreRealtimeSync();
-                    } else {
-                        if (firestoreUnsubscribe) {
-                            firestoreUnsubscribe();
-                            firestoreUnsubscribe = null;
+                loginPromise.then(function() {
+                    auth.onAuthStateChanged(function(user) {
+                        currentUser = user;
+                        if (user) {
+                            console.log("Firebase Connected Real-time. UID:", user.uid);
+                            startFirestoreRealtimeSync();
+                        } else {
+                            if (firestoreUnsubscribe) {
+                                firestoreUnsubscribe();
+                                firestoreUnsubscribe = null;
+                            }
                         }
-                    }
+                    });
+                }).catch(function(err) {
+                    console.error("Firebase Login Error:", err);
+                    showToast("Firebase Otorisasi Gagal: " + err.message, "error");
                 });
+
             } catch (e) {
                 console.error("Firebase Gagal diinisialisasi. Aplikasi beralih otomatis ke cadangan Google Sheets:", e);
                 auth = null;
@@ -1038,9 +1086,9 @@
                         calculateAndRenderStats(listPeserta);
                     }, (error) => {
                         console.error("Firestore listen error:", error);
-                        // Tampilkan pesan panduan log aturan keamanan jika eror
+                        // Tampilkan petunjuk ramah penanganan keamanan
                         if (error.message.includes("permission") || error.message.includes("Permissions")) {
-                            showToast("Izin database ditolak. Pastikan Firestore Security Rules proyek Anda sudah di-Publish!", "error");
+                            showToast("Izin Firestore Personal Ditolak. Pastikan Security Rules Proyek Anda sudah di-Publish!", "error");
                         }
                     });
             } catch (err) {
@@ -1078,27 +1126,29 @@
                 if (lombaVal.includes("tambang")) l3++;
             });
 
+            // Default kupon diubah menjadi 500 hibrida
             const sisaKuponVal = Math.max(0, 500 - totalHadir);
 
-            const dPendaftar = document.getElementById('stat-pendaftar');
-            const dHadir = document.getElementById('stat-hadir');
-            const dKupon = document.getElementById('stat-kupon');
-            const dTimMerah = document.getElementById('stat-tim-merah');
-            const dTimPutih = document.getElementById('stat-tim-putih');
-            const dLomba1 = document.getElementById('stat-lomba-1');
-            const dLomba2 = document.getElementById('stat-lomba-2');
-            const dLomba3 = document.getElementById('stat-lomba-3');
+            const statPendaftar = document.getElementById('stat-pendaftar');
+            const statHadir = document.getElementById('stat-hadir');
+            const statKupon = document.getElementById('stat-kupon');
+            const statTimMerah = document.getElementById('stat-tim-merah');
+            const statTimPutih = document.getElementById('stat-tim-putih');
+            
+            if (statPendaftar) statPendaftar.innerText = totalPendaftar;
+            if (statHadir) statHadir.innerText = totalHadir;
+            if (statKupon) statKupon.innerText = sisaKuponVal;
 
-            if (dPendaftar) dPendaftar.innerText = totalPendaftar;
-            if (dHadir) dHadir.innerText = totalHadir;
-            if (dKupon) dKupon.innerText = sisaKuponVal;
+            if (statTimMerah) statTimMerah.innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
+            if (statTimPutih) statTimPutih.innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
 
-            if (dTimMerah) dTimMerah.innerHTML = `${totalMerah} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirMerah} hadir)</span>`;
-            if (dTimPutih) dTimPutih.innerHTML = `${totalPutih} <span class="text-xs font-normal opacity-85 block mt-1">(${hadirPutih} hadir)</span>`;
+            const sl1 = document.getElementById('stat-lomba-1');
+            const sl2 = document.getElementById('stat-lomba-2');
+            const sl3 = document.getElementById('stat-lomba-3');
 
-            if (dLomba1) dLomba1.innerText = l1;
-            if (dLomba2) dLomba2.innerText = l2;
-            if (dLomba3) dLomba3.innerText = l3;
+            if (sl1) sl1.innerText = l1;
+            if (sl2) sl2.innerText = l2;
+            if (sl3) sl3.innerText = l3;
 
             const belumHadir = Math.max(0, totalPendaftar - totalHadir);
             updateAttendanceChart(totalHadir, belumHadir);
@@ -1118,8 +1168,9 @@
             if (rKupon) rKupon.innerText = sisaKuponVal + " Kupon";
         }
 
-        async function processRegistrationCode(idCode) {
-            const normalizedCode = idCode.trim().toUpperCase();
+        // Proses Pemindaian Instan Firestore Kilat (<100ms)
+        function processRegistrationCode(idCode) {
+            var normalizedCode = idCode.trim().toUpperCase();
 
             // Guard: Jika firebase/user belum login, fallback langsung ke Sheets cadangan (RULE 3)
             if (!db || !currentUser) {
@@ -1129,12 +1180,11 @@
             }
 
             showOverlay(true, "Memverifikasi Barcode...", "Koneksi Instan Firebase Cloud...");
-            const pDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(normalizedCode);
-            const toggleWaEl = document.getElementById('toggle-wa');
-            const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
+            var pDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(normalizedCode);
+            var toggleWaEl = document.getElementById('toggle-wa');
+            var waEnabled = toggleWaEl ? toggleWaEl.checked : true;
 
-            try {
-                const docSnap = await pDocRef.get();
+            pDocRef.get().then(function(docSnap) {
                 if (!docSnap.exists) {
                     showOverlay(false);
                     playSuccessSound(false);
@@ -1143,96 +1193,98 @@
                     return;
                 }
 
-                const pData = docSnap.data();
-                const now = new Date();
-                const timestampNow = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + " WIB";
+                var pData = docSnap.data();
+                var now = new Date();
+                var timestampNow = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + " WIB";
 
                 if (currentScanMode === "checkIn") {
                     if (pData.status === "Sudah Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        displayScanResult({ success: false, alreadyCheckedIn: true, data: pData, message: `Peserta atas nama ${pData.nama} sudah registrasi check-in sebelumnya.` });
+                        displayScanResult({ success: false, alreadyCheckedIn: true, data: pData, message: "Peserta atas nama " + pData.nama + " sudah registrasi check-in sebelumnya." });
                         return;
                     }
 
                     if (pData.status === "Tidak Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        showToast(`Relawan ${pData.nama} tercatat berhalangan hadir (Tidak Hadir).`, "error");
+                        showToast("Relawan " + pData.nama + " tercatat berhalangan hadir (Tidak Hadir).", "error");
                         resetScanDisplayToStandby();
                         return;
                     }
 
-                    const updatedData = { ...pData, status: "Sudah Hadir", waktuScan: timestampNow };
-                    await pDocRef.set(updatedData);
-                    showOverlay(false);
-                    displayScanResult({ success: true, data: updatedData });
-                    
-                    if (waEnabled) {
-                        updatedData.scanMode = currentScanMode;
-                        sendEmailNotificationAPI(updatedData);
-                    }
-                    triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
+                    var updatedData = Object.assign({}, pData, { status: "Sudah Hadir", waktuScan: timestampNow });
+                    pDocRef.set(updatedData).then(function() {
+                        showOverlay(false);
+                        displayScanResult({ success: true, data: updatedData });
+                        
+                        if (waEnabled) {
+                            updatedData.scanMode = currentScanMode;
+                            sendEmailNotificationAPI(updatedData);
+                        }
+                        triggerAsynchronousSheetsSync(normalizedCode, "checkIn", timestampNow, updatedData);
+                    });
                 } else {
                     if (pData.status !== "Sudah Hadir") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        showToast(`Gagal! Relawan ${pData.nama} belum melakukan Check-In datang pagi.`, "error");
+                        showToast("Gagal! Relawan " + pData.nama + " belum melakukan Check-In datang pagi.", "error");
                         resetScanDisplayToStandby();
                         return;
                     }
                     if (pData.statusPulang === "Selesai") {
                         showOverlay(false);
                         playSuccessSound(false);
-                        displayScanResult({ success: false, alreadyCheckedOut: true, data: pData, message: `Eror! Souvenir sudah diambil oleh ${pData.nama} pada pukul ${pData.waktuScanPulang || "-"}` });
+                        displayScanResult({ success: false, alreadyCheckedOut: true, data: pData, message: "Eror! Souvenir sudah diambil oleh " + pData.nama + " pada pukul " + (pData.waktuScanPulang || "-") });
                         return;
                     }
 
-                    const updatedData = { ...pData, statusPulang: "Selesai", waktuScanPulang: timestampNow };
-                    await pDocRef.set(updatedData);
-                    showOverlay(false);
-                    displayScanResult({ success: true, data: updatedData });
-                    
-                    if (waEnabled) {
-                        updatedData.scanMode = currentScanMode;
-                        sendEmailNotificationAPI(updatedData);
-                    }
-                    triggerAsynchronousSheetsSync(normalizedCode, "checkOut", timestampNow, updatedData);
+                    var updatedData = Object.assign({}, pData, { statusPulang: "Selesai", waktuScanPulang: timestampNow });
+                    pDocRef.set(updatedData).then(function() {
+                        showOverlay(false);
+                        displayScanResult({ success: true, data: updatedData });
+                        
+                        if (waEnabled) {
+                            updatedData.scanMode = currentScanMode;
+                            sendEmailNotificationAPI(updatedData);
+                        }
+                        triggerAsynchronousSheetsSync(normalizedCode, "checkOut", timestampNow, updatedData);
+                    });
                 }
-            } catch (err) {
+            }).catch(function(err) {
                 showOverlay(false);
                 showToast("Firebase Transaction Error: " + err.message, "error");
-            }
+            });
         }
 
-        async function processRegistrationCodeViaSheetsOnly(normalizedCode) {
-            showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server...");
-            const toggleWaEl = document.getElementById('toggle-wa');
-            const waEnabled = toggleWaEl ? toggleWaEl.checked : true;
-            try {
-                const result = await fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode });
-                showOverlay(false);
-                displayScanResult(result);
-                if (result.success && waEnabled) {
-                    result.data.scanMode = currentScanMode;
-                    sendEmailNotificationAPI(result.data);
-                }
-                
-                const activePane = document.querySelector('.view-pane:not(.hidden)');
-                if (activePane && activePane.id === 'view-scan') {
-                    showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
-                    setTimeout(() => {
-                        const currentPane = document.querySelector('.view-pane:not(.hidden)');
-                        if (currentPane && currentPane.id === 'view-scan') {
-                            startScanner();
-                            showToast("Scanner aktif otomatis! Siap memindai.", "success");
-                        }
-                    }, 5000);
-                }
-            } catch (err) {
-                showOverlay(false);
-                showToast("Koneksi API Gagal: " + err.message, "error");
-            }
+        function processRegistrationCodeViaSheetsOnly(normalizedCode) {
+            showOverlay(true, "Memverifikasi Barcode (Cadangan)...", "Mencocokkan data ke server Sheets...");
+            var toggleWaEl = document.getElementById('toggle-wa');
+            var waEnabled = toggleWaEl ? toggleWaEl.checked : true;
+            fetchAPI("checkIn", { idRegistrasi: normalizedCode, mode: currentScanMode })
+                .then(function(result) {
+                    showOverlay(false);
+                    displayScanResult(result);
+                    if (result.success && waEnabled) {
+                        result.data.scanMode = currentScanMode;
+                        sendEmailNotificationAPI(result.data);
+                    }
+                    
+                    var activePane = document.querySelector('.view-pane:not(.hidden)');
+                    if (activePane && activePane.id === 'view-scan') {
+                        showToast("Scanner dilesat kembali dalam 5 detik...", "warning");
+                        setTimeout(function() {
+                            var currentPane = document.querySelector('.view-pane:not(.hidden)');
+                            if (currentPane && currentPane.id === 'view-scan') {
+                                startScanner();
+                                showToast("Scanner aktif otomatis! Siap memindai.", "success");
+                            }
+                        }, 5000);
+                    }
+                }).catch(function(err) {
+                    showOverlay(false);
+                    showToast("Koneksi API Gagal: " + err.message, "error");
+                });
         }
 
         function triggerAsynchronousSheetsSync(idRegistrasi, mode, timestamp, fullData) {
@@ -1253,67 +1305,50 @@
             showCustomConfirm(
                 "Sinkronisasi Database",
                 "Apakah Anda yakin ingin menarik data dari Google Sheets ke Firebase Cloud? Data lama di Firebase yang tidak ada di Google Sheets akan ikut terhapus untuk menyamakan database.",
-                async function() {
+                function() {
                     showOverlay(true, "Menghubungkan G-Sheets...", "Menarik data...");
-                    try {
-                        let url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
-                        const response = await fetch(url, { redirect: 'follow' });
-                        const sheetsData = await response.json();
-                        
-                        showOverlay(true, "Sinkronisasi...", `Menulis ${sheetsData.length} data ke Firebase...`);
-                        const batch = db.batch();
-                        
-                        listPeserta.forEach(p => {
-                            const oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
-                            batch.delete(oldDocRef);
-                        });
-                        
-                        sheetsData.forEach(p => {
-                            const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
-                            batch.set(docRef, {
-                                id: p.id.toString().toUpperCase(),
-                                nama: p.nama || "Tanpa Nama",
-                                unit: p.unit || "Umum",
-                                lomba: p.lomba || "-",
-                                phone: p.phone || "-",
-                                tim: p.tim || "-",
-                                waktuScan: p.waktuScan || "-",
-                                status: p.status || "Belum Hadir",
-                                statusPulang: p.statusPulang || "Belum Pulang",
-                                waktuScanPulang: p.waktuScanPulang || "-"
+                    var url = API_URL + (API_URL.includes('?') ? '&' : '?') + "action=getParticipants";
+                    var fetchedData = [];
+                    fetch(url, { redirect: 'follow' })
+                        .then(function(response) { return response.json(); })
+                        .then(function(sheetsData) {
+                            fetchedData = sheetsData;
+                            showOverlay(true, "Sinkronisasi...", "Menulis " + sheetsData.length + " data ke Firebase...");
+                            var batch = db.batch();
+                            
+                            listPeserta.forEach(function(p) {
+                                var oldDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                                batch.delete(oldDocRef);
                             });
+                            
+                            sheetsData.forEach(function(p) {
+                                var docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('participants').doc(p.id.toString().toUpperCase());
+                                batch.set(docRef, {
+                                    id: p.id.toString().toUpperCase(),
+                                    nama: p.nama || "Tanpa Nama",
+                                    unit: p.unit || "Umum",
+                                    lomba: p.lomba || "-",
+                                    phone: p.phone || "-",
+                                    tim: p.tim || "-",
+                                    waktuScan: p.waktuScan || "-",
+                                    status: p.status || "Belum Hadir",
+                                    statusPulang: p.statusPulang || "Belum Pulang",
+                                    waktuScanPulang: p.waktuScanPulang || "-"
+                                });
+                            });
+                            
+                            return batch.commit();
+                        })
+                        .then(function() {
+                            showOverlay(false);
+                            showToast("Sukses menyinkronkan database! Sekarang Firebase memiliki " + fetchedData.length + " data relawan.", "success");
+                        })
+                        .catch(function(err) {
+                            showOverlay(false);
+                            showToast("Gagal Bulk Sync: " + err.message, "error");
                         });
-                        
-                        await batch.commit();
-                        showOverlay(false);
-                        showToast("Sukses menyinkronkan database! Sekarang Firebase memiliki " + sheetsData.length + " data relawan.", "success");
-                    } catch (err) {
-                        showOverlay(false);
-                        showToast("Gagal Bulk Sync: " + err.message, "error");
-                    }
                 }
             );
-        }
-
-        function startClock() {
-            const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-            
-            setInterval(() => {
-                const now = new Date();
-                const dayName = days[now.getDay()];
-                const date = now.getDate();
-                const monthName = months[now.getMonth()];
-                const year = now.getFullYear();
-                const hour = String(now.getHours()).padStart(2, '0');
-                const min = String(now.getMinutes()).padStart(2, '0');
-                const sec = String(now.getSeconds()).padStart(2, '0');
-                
-                const clockEl = document.getElementById('real-time-clock');
-                if (clockEl) {
-                    clockEl.innerHTML = `${dayName}, ${date} ${monthName} ${year} • ${hour}:${min}:${sec} WIB`;
-                }
-            }, 1000);
         }
 
         function checkAppEnv() {
@@ -1324,12 +1359,12 @@
                 badge.innerHTML = '<i class="fa-solid fa-cloud"></i> <span class="nav-label">REST API Connected</span>';
             } else {
                 badge.className = "inline-flex items-center gap-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold nav-label";
-                badge.innerHTML = '<i class="fa-solid =fa-desktop"></i> <span class="nav-label">Mode Simulator Vercel</span>';
+                badge.innerHTML = '<i class="fa-solid fa-desktop"></i> <span class="nav-label">Mode Simulator Vercel</span>';
             }
         }
 
-        async function fetchAPI(action, payload = null) {
-            if (!isGAS) return null;
+        function fetchAPI(action, payload = null) {
+            if (!isGAS) return Promise.resolve(null);
             
             const options = { redirect: 'follow' };
             let url = API_URL;
@@ -1337,89 +1372,100 @@
             if (payload) {
                 options.method = 'POST';
                 options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
-                options.body = JSON.stringify({ action: action, ...payload });
+                options.body = JSON.stringify(Object.assign({ action: action }, payload));
             } else {
                 options.method = 'GET';
                 url += (url.includes('?') ? '&' : '?') + "action=" + action;
             }
             
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
-                const text = await response.text();
-                
-                if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-                    throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
-                }
-                return JSON.parse(text);
-            } catch (err) {
-                console.warn("Koneksi langsung gagal, mencoba proxy cadangan...", err);
-                if (!payload) {
-                    try {
-                        const allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-                        const aoResponse = await fetch(allOriginsUrl);
-                        if (!aoResponse.ok) throw new Error("AllOrigins failed");
-                        const aoJson = await aoResponse.json();
-                        const content = aoJson.contents;
-                        return JSON.parse(content);
-                    } catch (aoErr) {
-                        try {
-                            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-                            const proxyResponse = await fetch(proxyUrl);
-                            const text = await proxyResponse.text();
-                            return JSON.parse(text);
-                        } catch (proxyErr) {
-                            throw new Error("Gagal menarik data dari Google Sheets. Periksa setelan deployment Anda.");
-                        }
+            return fetch(url, options)
+                .then(function(response) {
+                    if (!response.ok) throw new Error("Terjadi kesalahan jaringan atau API");
+                    return response.text();
+                })
+                .then(function(text) {
+                    if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                        throw new Error("Google mengembalikan halaman Login HTML. Pastikan Web App Anda di-deploy dengan akses 'Anyone'!");
                     }
-                } else {
-                    throw err;
-                }
-            }
+                    return JSON.parse(text);
+                })
+                .catch(function(err) {
+                    console.warn("Koneksi langsung gagal, mencoba proxy cadangan...", err);
+                    if (!payload) {
+                        var allOriginsUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                        return fetch(allOriginsUrl)
+                            .then(function(aoResponse) {
+                                if (!aoResponse.ok) throw new Error("AllOrigins failed");
+                                return aoResponse.json();
+                            })
+                            .then(function(aoJson) {
+                                return JSON.parse(aoJson.contents);
+                            })
+                            .catch(function(aoErr) {
+                                var proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                                return fetch(proxyUrl)
+                                    .then(function(proxyResponse) { return proxyResponse.text(); })
+                                    .then(function(text) { return JSON.parse(text); })
+                                    .catch(function(proxyErr) {
+                                        throw new Error("Gagal menarik data dari Google Sheets. Periksa setelan deployment Anda.");
+                                    });
+                            });
+                    } else {
+                        throw err;
+                    }
+                });
         }
 
-        async function syncDatabase(isBackground = false) {
+        function syncDatabase(isBackground = false) {
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('fa-spin');
             
             if (!isBackground) showOverlay(true, "Sedang Sinkronisasi...", "Mengambil data terbaru...");
 
             if (isGAS) {
-                try {
-                    const data = await fetchAPI("getParticipants");
-                    listPeserta = data;
-                    renderPesertaTable(listPeserta);
-                    await fetchStats();
-                    if (!isBackground) showOverlay(false);
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                } catch (error) {
-                    console.error("syncDatabase error:", error);
-                    if (!isBackground) {
-                        showToast("Koneksi Sheets API gagal: " + error.message, "error");
-                        showOverlay(false);
-                        if (error.message.includes("Anyone") || error.message.includes("Login HTML") || error.message.includes("Proxy")) {
-                            toggleApiErrorModal(true);
+                return fetchAPI("getParticipants")
+                    .then(function(data) {
+                        listPeserta = data;
+                        renderPesertaTable(listPeserta);
+                        return fetchStats();
+                    })
+                    .then(function() {
+                        if (!isBackground) showOverlay(false);
+                        if (syncIcon) syncIcon.classList.remove('fa-spin');
+                    })
+                    .catch(function(error) {
+                        console.error("syncDatabase error:", error);
+                        if (!isBackground) {
+                            showToast("Koneksi Sheets API gagal: " + error.message, "error");
+                            showOverlay(false);
+                            if (error.message.includes("Anyone") || error.message.includes("Login HTML") || error.message.includes("Proxy")) {
+                                toggleApiErrorModal(true);
+                            }
                         }
-                    }
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                }
+                        if (syncIcon) syncIcon.classList.remove('fa-spin');
+                    });
             } else {
-                setTimeout(() => {
-                    if (!isBackground) showOverlay(false);
-                    if (syncIcon) syncIcon.classList.remove('fa-spin');
-                }, 800);
+                return new Promise(function(resolve) {
+                    setTimeout(function() {
+                        if (!isBackground) showOverlay(false);
+                        if (syncIcon) syncIcon.classList.remove('fa-spin');
+                        resolve();
+                    }, 800);
+                });
             }
         }
 
-        async function fetchStats() {
+        function fetchStats() {
             if (isGAS) {
-                try {
-                    const stats = await fetchAPI("getStats");
-                    updateDashboardStatsUI(stats);
-                } catch (err) {
-                    console.error("Gagal mengambil stats:", err);
-                }
+                return fetchAPI("getStats")
+                    .then(function(stats) {
+                        updateDashboardStatsUI(stats);
+                    })
+                    .catch(function(err) {
+                        console.error("Gagal mengambil stats:", err);
+                    });
             }
+            return Promise.resolve(null);
         }
 
         function updateDashboardStatsUI(stats) {
@@ -1837,27 +1883,6 @@
             renderPesertaTable(filtered);
         }
 
-        window.onload = function() {
-            startClock();
-            checkAppEnv();
-            
-            const secureLinkEl = document.getElementById('current-secure-link');
-            if (secureLinkEl) {
-                secureLinkEl.innerText = window.location.href.replace("http://", "https://");
-            }
-
-            // Inisialisasi Otentikasi dan Firebase Real-time asinkron yang aman (RULE 3)
-            initFirebaseAndAuth();
-
-            // BACKGROUND AUTO-SYNC (Menarik data baru otomatis setiap 10 detik jika REST API terhubung)
-            setInterval(() => {
-                if (isGAS) syncDatabase(true); 
-            }, 10000); 
-
-            // Sync awal saat pertama dimuat
-            syncDatabase();
-        };
-
         // BINDING KESELURUHAN FUNGSI KE SKOP JENDELA BROWSER (WINDOW)
         window.switchView = switchView;
         window.setScanMode = setScanMode;
@@ -1881,18 +1906,42 @@
         window.calculateAndRenderStats = calculateAndRenderStats;
         window.showOverlay = showOverlay;
         window.showToast = showToast;
+        window.resetScanDisplayToStandby = resetScanDisplayToStandby; 
+        window.startClock = startClock; // EXPLICIT GLOBAL BINDING (FIXED!)
         window.syncDatabase = () => {
             showToast("Melakukan Sinkronisasi Firebase Real-time...", "success");
             startFirestoreRealtimeSync();
         };
 
-        async function sendEmailNotificationAPI(participantData) {
-            try {
-                const res = await fetchAPI("sendEmail", { data: participantData });
-                addWaLogToUI(participantData, res.success, res.logMessage);
-            } catch(err) {
-                addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
+        window.onload = function() {
+            startClock(); // Sekarang dijamin terpanggil lancar (FIXED!)
+            checkAppEnv();
+            
+            const secureLinkEl = document.getElementById('current-secure-link');
+            if (secureLinkEl) {
+                secureLinkEl.innerText = window.location.href.replace("http://", "https://");
             }
+
+            // Inisialisasi Otentikasi dan Firebase Real-time asinkron yang aman (RULE 3)
+            initFirebaseAndAuth();
+
+            // BACKGROUND AUTO-SYNC (Menarik data baru otomatis setiap 10 detik jika REST API terhubung)
+            setInterval(() => {
+                if (isGAS) syncDatabase(true); 
+            }, 10000); 
+
+            // Sync awal saat pertama dimuat
+            syncDatabase();
+        };
+
+        function sendEmailNotificationAPI(participantData) {
+            return fetchAPI("sendEmail", { data: participantData })
+                .then(function(res) {
+                    addWaLogToUI(participantData, res.success, res.logMessage);
+                })
+                .catch(function(err) {
+                    addWaLogToUI(participantData, false, "Koneksi API Error: " + err.message);
+                });
         }
 
         function addWaLogToUI(data, isSent, messageText) {
