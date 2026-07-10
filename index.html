@@ -1844,9 +1844,9 @@
                     showToast("Selamat registrasi check-in berhasil!", "success");
                 } else {
                     if (badgeTitle) badgeTitle.innerHTML = `<i class="fa-solid fa-gift mr-1"></i> SOUVENIR DISERAHKAN`;
-                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Sertifikat & Souvenir Berhasil Diserahkan!"</span>`;
+                    resSuccessMsg.innerHTML = `<span class="text-emerald-800 font-bold">"Souvenir Berhasil Diserahkan!"</span>`;
                     if (rWaktu) rWaktu.innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Check-Out: ${result.data.waktuScanPulang || result.data.waktuScan}`;
-                    showToast("Sertifikat & Souvenir Berhasil Diserahkan!", "success");
+                    showToast("Souvenir Berhasil Diserahkan!", "success");
                 }
                 
                 const resKategori = document.getElementById('res-kategori');
